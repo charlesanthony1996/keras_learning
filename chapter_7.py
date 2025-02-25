@@ -178,4 +178,78 @@ priority_preds, department_preds = model.predict({"title": title_data, "text_bod
 
 # listing 7.15 creating a functional model that includes a subclassed model
 
+class Classifier(keras.Model):
+    def __init__(self, num_classes = 2):
+        super().__init__()
+        if num_classes == 2:
+            num_units = 1
+            activation = "sigmoid"
+        else:
+            num_units = num_classes
+            activation = "softmax"
+        self.dense = layers.Dense(num_units, activation=activation)
 
+    def call(self, inputs):
+        return self.dense(inputs)
+
+inputs = keras.Input(shape=(3,))
+features = layers.Dense(64, activation="relu")(inputs)
+outputs = Classifier(num_classes = 10)(features)
+model = keras.Model(inputs=inputs, outputs=outputs)
+
+# listing 7.16 creating a subclassed model that includes a functional model
+inputs = keras.Input(shape=(64,))
+outputs = layers.Dense(1, activation="sigmoid")(inputs)
+binary_classifier = keras.Model(inputs=inputs, outputs=outputs)
+
+class MyModel(keras.Model):
+    def __init__(self, num_classes= 2):
+        super().__init__()
+        self.dense = layers.Dense(64, activation="relu")
+        self.classifier = binary_classifier
+
+    def call(self, inputs):
+        features = self.dense(inputs)
+        return self.classifier(features)
+
+
+model = MyModel()
+
+# listing 7.17 the standard workflow: compile, fit, evaluate, predict
+from tensorflow.keras.datasets import mnist
+
+def get_mnist_model():
+    inputs = keras.Input(shape=(28 * 28,))
+    features = layers.Dense(512, activation="relu")(inputs)
+    features = layers.Dropout(0.5)(features)
+    outputs = layers.Dense(10, activation="softmax")(features)
+
+    model = keras.Model(inputs, outputs)
+    return model
+
+print(model.summary())
+
+(images, labels), (test_images, test_labels) = mnist.load_data()
+images = images.reshape((60000, 28 * 28)).astype("float32") / 255
+test_images = test_images.reshape((10000, 28 * 28)).astype("float32") / 255
+train_images, val_images = images[10000:], images[:10000]
+train_labels, val_labels = labels[10000:], labels[:10000]
+
+model = get_mnist_model()
+model.compile(
+    optimizer="rmsprop",
+    loss="sparse_categorical_crossentropy",
+    metrics=["accuracy"])
+
+model.fit(train_images, train_labels, epochs=3, validation_data=(val_images, val_labels))
+
+test_metrics = model.evaluate(test_images, test_labels)
+predictions = model.predict(test_images)
+
+
+# listing 7.18 implementing a custom metric by subclassing the metric class
+
+import tensorflow as tf
+
+class RootMeanSquaredError(keras.metrics.Metric):
+    pass
