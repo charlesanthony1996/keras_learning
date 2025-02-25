@@ -178,3 +178,4 @@ priority_preds, department_preds = model.predict({"title": title_data, "text_bod
 
 # listing 7.15 creating a functional model that includes a subclassed model
 
+
