@@ -1,0 +1,5 @@
+cats_vs_dogs_small
+.cats_vs_dogs_small
+feature_extraction.keras
+convnet_from_scratch.keras
+convnet_from_scratch_with_augmentation.keras
