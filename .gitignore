@@ -3,3 +3,15 @@ cats_vs_dogs_small
 feature_extraction.keras
 convnet_from_scratch.keras
 convnet_from_scratch_with_augmentation.keras
+checkpoint_path.keras
+.checkpoint_path.keras
+Plot_at_epoch_0.png
+Plot_at_epoch_1.png
+Plot_at_epoch_2.png
+Plot_at_epoch_3.png
+Plot_at_epoch_4.png
+Plot_at_epoch_5.png
+Plot_at_epoch_6.png
+Plot_at_epoch_7.png
+Plot_at_epoch_8.png
+Plot_at_epoch_9.png

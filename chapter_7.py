@@ -305,3 +305,49 @@ model.compile(
 model.fit(train_images, train_labels, epochs=10, callbacks=callbacks_list, validation_data=(val_images, val_labels))
 
 model = keras.models.load_model("checkpoint_path.keras")
+
+
+# writing your own callbacks
+
+# listing 7.20 creating a custom callback by subclassing the classfication
+from matplotlib import pyplot as plt
+
+class LossHistory(keras.callbacks.Callback):
+    def on_train_begin(self, logs):
+        self.per_batch_losses = []
+
+    def on_batch_end(self, batch, logs):
+        self.per_batch_losses.append(logs.get("loss"))
+
+    def on_epoch_end(self, epoch, logs):
+        plt.clf()
+        plt.plot(range(len(self.per_batch_losses)), self.per_batch_losses),
+        plt.xlabel(f"Batch (epoch {epoch})")
+        plt.ylabel("Loss")
+        plt.legend()
+        plt.savefig(f"Plot_at_epoch_{epoch}")
+        self.per_batch_losses = []
+
+
+model = get_mnist_model()
+model.compile(
+    optimizer="rmsprop",
+    loss="sparse_categorical_crossentropy",
+    metrics=["accuracy"]
+)
+
+model.fit(train_images, train_labels, epochs=10, callbacks=[LossHistory()], validation_data=(val_images, val_labels))
+
+# using the tensorboard
+
+model = get_mnist_model()
+model.compile(
+    optimizer="rmsprop",
+    loss="sparse_categorical_crossentropy",
+    metrics=["accuracy"]
+)
+
+tensorboard = keras.callbacks.TensorBoard(log_dir="./logs_for_chapter_7")
+
+model.fit(train_images, train_labels, epochs=10, validation_data=(val_images, val_labels), callbacks=[tensorboard])
+
