@@ -383,10 +383,10 @@ def train_step(inputs, targets):
 
     logs = {}
     for metric in metrics:
-        metric.update_space(targets, predictions)
+        metric.update_state(targets, predictions)
         logs[metric.name] = metric.result()
 
-    logs_tracking_metric.update_state(loss)
+    loss_tracking_metric.update_state(loss)
     logs["logs"] = loss_tracking_metric.result()
     return logs
 
@@ -424,7 +424,7 @@ def test_step(inputs, targets):
         metric.update_state(targets, predictions)
         logs["val_" + metric.name] = metric.result()
 
-    loss_tracking_metric.update(loss)
+    loss_tracking_metric.update_state(loss)
     logs["val_loss"] = loss_tracking_metric.result()
     return logs
 
@@ -438,3 +438,12 @@ for inputs_batch , targets_batch in val_dataset:
 print("Evaluation result: ")
 for key, value in logs.items():
     print(f"...{key} : {value:.4f}")
+
+
+# making it fast @tf.function
+
+# listing 7.25 adding a @tf.function decorator to our evaluation step function
+
+@tf.function
+def test_step(inputs, targets):
+    pass
