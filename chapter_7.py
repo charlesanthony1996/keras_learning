@@ -241,7 +241,7 @@ model.compile(
     loss="sparse_categorical_crossentropy",
     metrics=["accuracy"])
 
-model.fit(train_images, train_labels, epochs=3, validation_data=(val_images, val_labels))
+model.fit(train_images, train_labels, epochs=1, validation_data=(val_images, val_labels))
 
 test_metrics = model.evaluate(test_images, test_labels)
 predictions = model.predict(test_images)
@@ -278,7 +278,7 @@ model.compile(
     metrics=["accuracy", RootMeanSquaredError()]
 )
 
-model.fit(train_images, train_labels, epochs=3, validation_data=(val_images, val_labels))
+model.fit(train_images, train_labels, epochs=1, validation_data=(val_images, val_labels))
 test_metrics = model.evaluate(test_images, test_labels)
 
 # listing 7.19 using the callbacks argument in the fit() method
@@ -302,7 +302,7 @@ model.compile(
     metrics=["accuracy"]
 )
 
-model.fit(train_images, train_labels, epochs=10, callbacks=callbacks_list, validation_data=(val_images, val_labels))
+model.fit(train_images, train_labels, epochs=1, callbacks=callbacks_list, validation_data=(val_images, val_labels))
 
 model = keras.models.load_model("checkpoint_path.keras")
 
@@ -336,7 +336,7 @@ model.compile(
     metrics=["accuracy"]
 )
 
-model.fit(train_images, train_labels, epochs=10, callbacks=[LossHistory()], validation_data=(val_images, val_labels))
+model.fit(train_images, train_labels, epochs=1, callbacks=[LossHistory()], validation_data=(val_images, val_labels))
 
 # using the tensorboard
 
@@ -364,3 +364,34 @@ values = [0, 1, 2, 3, 4]
 mean_tracker = keras.metrics.Mean()
 for value in values:
     print(f"Mean of values: {mean_tracker.result():.2f}")
+
+# 7.21 writing a step by step training loop: the training step function
+
+model = get_mnist_model()
+
+loss_fn = keras.losses.SparseCategoricalAccuracy()
+optimizer = keras.optimizer.RMSProp()
+metrics = [keras.metrics.SparseCategoricalAccuracy()]
+loss_tracking_metric = keras.metrics.Mean()
+
+def train_step(inputs, targets):
+    with tf.GradientTape() as tape:
+        predictions = model(inputs, predictions)
+        loss = loss_fn(targets, predictions)
+    gradients = tape.gradient(loss, model.training_weights)
+    optimizer.apply_gradients(zip(gradients, model.trainable_weights))
+
+    logs = {}
+    for metric in metrics:
+        metric.update_space(targets, predictions)
+        logs[metric.name] = metric.result()
+
+    logs_tracking_metric.update_state(loss)
+    logs["logs"] = loss_tracking_metric.result()
+    return logs
+
+
+# listing 7.22 writing a step by step training loop: resetting the metrics
+
+def reset_metrics:
+    pass
