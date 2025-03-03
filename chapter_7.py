@@ -349,7 +349,7 @@ model.compile(
 
 tensorboard = keras.callbacks.TensorBoard(log_dir="./logs_for_chapter_7")
 
-model.fit(train_images, train_labels, epochs=10, validation_data=(val_images, val_labels), callbacks=[tensorboard])
+model.fit(train_images, train_labels, epochs=1, validation_data=(val_images, val_labels), callbacks=[tensorboard])
 
 # low level usage of metrics
 
@@ -393,5 +393,5 @@ def train_step(inputs, targets):
 
 # listing 7.22 writing a step by step training loop: resetting the metrics
 
-def reset_metrics:
+def reset_metrics():
     pass
