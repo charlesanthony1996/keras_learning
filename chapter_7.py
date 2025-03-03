@@ -351,3 +351,16 @@ tensorboard = keras.callbacks.TensorBoard(log_dir="./logs_for_chapter_7")
 
 model.fit(train_images, train_labels, epochs=10, validation_data=(val_images, val_labels), callbacks=[tensorboard])
 
+# low level usage of metrics
+
+metric = keras.metrics.SparseCategoricalAccuracy()
+targets = [0, 1, 2]
+predictions = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+metric.update_state(targets, predictions)
+current_result = metric.result()
+print(f"result: {current_result}")
+
+values = [0, 1, 2, 3, 4]
+mean_tracker = keras.metrics.Mean()
+for value in values:
+    print(f"Mean of values: {mean_tracker.result():.2f}")
