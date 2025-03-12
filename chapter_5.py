@@ -116,6 +116,113 @@ model.fit(train_images, train_labels, epochs=3, batch_size=128, validation_split
 
 # listing 5.8 the same model
 
-# model = keras.Sequential([
+model = keras.Sequential([
+    layers.Dense(512, activation="relu"),
+    layers.Dense(10, activation="softmax")
+])
 
-# ])
+model.compile(
+    optimizer=keras.optimizers.RMSprop(1e-2),
+    loss="sparse_categorical_crossentropy",
+    metrics=["accuracy"]
+)
+
+model.fit(train_images, train_labels, epochs=10, batch_size=128, validation_split=0.2)
+
+# listing 5.9 a simple logistic regression on mnist
+
+model = keras.Sequential([layers.Dense(10, activation="softmax")])
+model.compile(
+    optimizer="rmsprop",
+    loss="sparse_categorical_crossentropy",
+    metrics=["accuracy"]
+)
+
+history_small_model = model.fit(
+    train_images,
+    train_labels,
+    epochs=20,
+    batch_size=128,
+    validation_split=0.2
+)
+
+import matplotlib.pyplot as plt
+val_loss = history_small_model.history["val_loss"]
+epochs = range(1, 21)
+plt.plot(epochs, val_loss, "b--", label="Validation loss")
+plt.title("Effect of insufficient model capacity on validation loss")
+plt.xlabel("Epochs")
+plt.ylabel("Loss")
+plt.legend()
+# plt.show()
+
+
+# lets try training a bigger model, one with two intermediate layers with 96 units each:
+
+model = keras.Sequential([
+    layers.Dense(96, activation="relu"),
+    layers.Dense(96, activation="relu"),
+    layers.Dense(10, activation="softmax")
+])
+
+model.compile(
+    optimizer="rmsprop",
+    loss="sparse_categorical_crossentropy",
+    metrics=["accuracy"]
+)
+
+history_large_model = model.fit(train_images, train_labels, epochs=20, batch_size=128, validation_split=0.2)
+
+import matplotlib.pyplot as plt
+val_loss = history_large_model.history["val_loss"]
+epochs = range(1, 21)
+plt.plot(epochs, val_loss, "b--", label="Validation loss")
+plt.title("Effect of insufficient model capacity on validation loss")
+plt.xlabel("Epochs")
+plt.ylabel("Loss")
+plt.legend()
+# plt.show()
+
+# listing 5.10 original model
+
+from tensorflow.keras.datasets import imdb
+# from tensorflow import keras
+# from tensorflow.keras import layers
+(train_data, train_labels), _ = imdb.load_data(num_words=10000)
+
+def vectorize_sequences(sequences, dimension=10000):
+    results = np.zeros((len(sequences), dimension))
+    for i, sequence in enumerate(sequences):
+        results[i, sequence] = 1.
+    return results
+
+train_data = vectorize_sequences(train_data)
+
+model = keras.Sequential([
+    layers.Dense(16, activation="relu"),
+    layers.Dense(16, activation="relu"),
+    layers.Dense(1, activation="sigmoid")
+])
+
+
+model.compile(optimizer="rmsprop", loss="binary_crossentropy", metrics=["accuracy"])
+
+history_original = model.fit(train_data, train_labels, epochs=20, batch_size=512, validation_split=0.4)
+
+# listing 5.11 Version of the model with lower capacity
+
+model = keras.Sequential([
+    layers.Dense(4, activation="relu", input_shape=(10000,)),
+    layers.Dense(4, activation="relu"),
+    layers.Dense(1, activation="sigmoid")
+])
+
+model.compile(
+    optimizer="rmsprop",
+    loss="binary_crossentropy",
+    metrics=["accuracy"]
+)
+
+history_original = model.fit(train_data, train_labels, epochs=20, batch_size = 512, validation_split=0.4)
+
+# listing 5.12 version of the model with higher capacity
