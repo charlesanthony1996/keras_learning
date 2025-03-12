@@ -173,14 +173,14 @@ model.compile(
 
 history_large_model = model.fit(train_images, train_labels, epochs=20, batch_size=128, validation_split=0.2)
 
-import matplotlib.pyplot as plt
-val_loss = history_large_model.history["val_loss"]
-epochs = range(1, 21)
-plt.plot(epochs, val_loss, "b--", label="Validation loss")
-plt.title("Effect of insufficient model capacity on validation loss")
-plt.xlabel("Epochs")
-plt.ylabel("Loss")
-plt.legend()
+# import matplotlib.pyplot as plt
+# val_loss = history_large_model.history["val_loss"]
+# epochs = range(1, 21)
+# plt.plot(epochs, val_loss, "b--", label="Validation loss")
+# plt.title("Effect of insufficient model capacity on validation loss")
+# plt.xlabel("Epochs")
+# plt.ylabel("Loss")
+# plt.legend()
 # plt.show()
 
 # listing 5.10 original model
@@ -226,3 +226,79 @@ model.compile(
 history_original = model.fit(train_data, train_labels, epochs=20, batch_size = 512, validation_split=0.4)
 
 # listing 5.12 version of the model with higher capacity
+
+model = keras.Sequential([
+    layers.Dense(512, activation="relu"),
+    layers.Dense(512, activation="relu"),
+    layers.Dense(1, activation="sigmoid")
+])
+
+model.compile(
+    optimizer="rmsprop",
+    loss="binary_crossentropy",
+    metrics=["accuracy"]
+)
+
+hisotry_larger_model = model.fit(train_data, train_labels, epochs=20, batch_size=512, validation_split=0.4)
+
+# listing 5.13 adding l2 weight regularization to the model
+
+from tensorflow.keras import regularizers
+
+model = keras.Sequential([
+    layers.Dense(16, kernel_regularizer=regularizers.l2(0.002)),
+    layers.Dense(16, kernel_regularizer=regularizers.l2(0.002)),
+    layers.Dense(1, activation="sigmoid")
+])
+
+model.compile(optimizer="rmsprop", loss="binary_crossentropy", metrics=["accuracy"])
+
+history_l2_reg = model.fit(train_data, train_labels, epochs=20, batch_size=20, validation_split=0.4)
+
+import matplotlib.pyplot as plt
+val_loss = history_large_model.history["val_loss"]
+epochs = range(1, 21)
+plt.plot(epochs, val_loss, "b--", label="Validation loss")
+plt.title("Effect of insufficient model capacity on validation loss")
+plt.xlabel("Epochs")
+plt.ylabel("Loss")
+plt.legend()
+# plt.show()
+
+# listing 5.14 different weight regularizers available in keras
+
+from tensorflow.keras import regularizers
+regularizers.l1(0.001)
+regularizers.l1_l2(l1= 0.001,l2 = 0.002)
+
+# studying dropout -> just an example
+
+# layer_output *= np.random.randint(0, high=2, size=layer_output.shape)
+# layer_output *= 0.5
+
+
+# listing 5.15 adding dropout to the imdb model
+
+model = keras.Sequential([
+    layers.Dense(16, activation="relu"),
+    layers.Dropout(0.5),
+    layers.Dense(16, activation="relu"),
+    layers.Dropout(0.5),
+    layers.Dense(1, activation="sigmoid")
+])
+
+model.compile(
+    optimizer="rmsprop",
+    loss="binary_crossentropy",
+    metrics=["accuracy"]
+)
+
+history_dropout = model.fit(
+    train_data,
+    train_labels,
+    epochs=20,
+    batch_size = 512,
+    validation_split=0.4
+)
+
+
