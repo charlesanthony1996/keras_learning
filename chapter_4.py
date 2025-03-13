@@ -257,6 +257,14 @@ model.fit(
 )
 
 results = model.evaluate(x_test, y_test)
-# print(results)
+print(results)
 
+import copy
+test_labels_copy = copy.copy(test_labels)
+np.random.shuffle(test_labels_copy)
+hits_array = np.array(test_labels) == np.array(test_labels_copy)
+hits_array.mean()
+print("hits array mean: ", hits_array.mean())
+
+# generating predictions on new data
 
