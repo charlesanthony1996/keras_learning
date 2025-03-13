@@ -428,7 +428,6 @@ def test_step(inputs, targets):
     logs["val_loss"] = loss_tracking_metric.result()
     return logs
 
-
 val_dataset = tf.data.Dataset.from_tensor_slices((val_images, val_labels))
 val_dataset = val_dataset.batch(32)
 reset_metrics()

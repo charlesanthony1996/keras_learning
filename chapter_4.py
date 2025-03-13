@@ -268,3 +268,23 @@ print("hits array mean: ", hits_array.mean())
 
 # generating predictions on new data
 
+predictions = model.predict(x_test)
+
+print(predictions[0].shape)
+
+print(np.sum(predictions))
+
+# the largest entry is the predicted class
+
+print(np.max(predictions[0]))
+
+# a different way to handle the labels and the loss
+
+y_train = np.array(train_labels)
+y_test = np.array(test_labels)
+
+model.compile(
+    optimizer="rmsprop"
+    loss="categorical_corssentropy"
+    
+)
