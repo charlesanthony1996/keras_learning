@@ -284,7 +284,68 @@ y_train = np.array(train_labels)
 y_test = np.array(test_labels)
 
 model.compile(
-    optimizer="rmsprop"
-    loss="categorical_corssentropy"
-    
+    optimizer="rmsprop",
+    loss="categorical_crossentropy",
+    metrics=["accuracy"]
 )
+
+# listing 4.22 a model with an information bottleneck
+
+model = keras.Sequential([
+    layers.Dense(64, activation="relu"),
+    layers.Dense(4, activation="relu"),
+    layers.Dense(46, activation="softmax")
+])
+
+model.compile(
+    optimizer="rmsprop",
+    loss="categorical_crossentropy",
+    metrics=["accuracy"]
+)
+
+model.fit(
+    partial_x_train,
+    partial_y_train,
+    epochs=20,
+    batch_size=512,
+    validation_data=(x_val, y_val)
+)
+
+# listing 4.23 loading the boston housing dataset
+
+from tensorflow.keras.datasets import boston_housing
+(train_data, train_targets), (test_data, test_targets) = (boston_housing.load_data())
+
+# lets look at the data
+print(train_data.shape)
+
+print(test_data.shape)
+
+print("train targets: ", train_targets.shape)
+
+# listing 4.24 normalizing the data
+
+mean = train_data.mean(axis=0)
+train_data -= mean
+
+std = train_data.std(axis=0)
+train_data /= std
+test_data -= mean
+test_data /= std
+
+# listing 4.25 model definition
+
+def build_model():
+    model = keras.Sequential([
+        layers.Dense(64, activation="relu"),
+        layers.Dense(64, activation="relu"),
+        layers.Dense(1)
+    ])
+
+    model.compile(optimizer="rmsprop", loss="mse", metrics=["mse"])
+    return model
+
+# listing 4.26 k-fold definition
+
+
+
