@@ -347,5 +347,22 @@ def build_model():
 
 # listing 4.26 k-fold definition
 
+k = 4
+num_val_samples = len(train_data) // k
+num_epochs = 100
+all_scores = []
 
-
+for i in range(k):
+    print(f"Processing fold #{i}")
+    val_data = train_data[i * num_val_samples: (i + 1) * num_val_samples]
+    val_targets = train_targets[i * num_val_samples: (i + 1) * num_val_samples]
+    partial_train_data = np.concatenate(
+        [train_data[:i * num_val_samples],
+        train_data[(i + 1) * num_val_samples:]],
+        axis=0
+    )
+    partial_train_targets = np.concatenate(
+        []
+    )
+    model = build_model()
+    history = model.fit(partial_train_data, partial_train_targets)
