@@ -17,3 +17,15 @@ Plot_at_epoch_8.png
 Plot_at_epoch_9.png
 logs_for_chapter_7
 .logs_for_chapter_7
+images
+.images
+annotations
+.annotations
+annotations.tar.gz
+.annotations.tar.gz
+images.tar.gz
+.images.tar.gz
+images.tar.gz.1
+.images.tar.gz.1
+oxford_segmentation.keras
+.oxford_segmentation.keras

@@ -446,3 +446,6 @@ print("Final result, test_mae_score: ", test_mae_score)
 
 predictions = model.predict(test_data)
 print("First prediction: ", predictions[0])
+
+
+
