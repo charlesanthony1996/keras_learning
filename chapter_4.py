@@ -342,7 +342,7 @@ def build_model():
         layers.Dense(1)
     ])
 
-    model.compile(optimizer="rmsprop", loss="mse", metrics=["mse"])
+    model.compile(optimizer="rmsprop", loss="mse", metrics=["mae"])
     return model
 
 # listing 4.26 k-fold definition
@@ -362,7 +362,84 @@ for i in range(k):
         axis=0
     )
     partial_train_targets = np.concatenate(
-        []
+        [train_targets[:i * num_val_samples], train_targets[(i + 1) * num_val_samples:]], axis=0
     )
     model = build_model()
-    history = model.fit(partial_train_data, partial_train_targets)
+    model.fit(
+        partial_train_data,
+        partial_train_targets,
+        epochs=num_epochs,
+        batch_size=16,
+        verbose=0
+    )
+    val_mse, val_mae = model.evaluate(val_data, val_targets, verbose=0)
+    all_scores.append(val_mae)
+
+print("All scores: ", all_scores)
+print("Mean price: ", np.mean(all_scores))
+
+
+# listing 4.27 saving the validation logs at each fold
+
+num_epochs = 500
+all_mae_histories = []
+for i in range(k):
+    print(f"Processing fold #{i}")
+    val_data = train_data[i * num_val_samples: (i + 1) * num_val_samples]
+    val_targets = train_targets[i * num_val_samples: (i + 1) * num_val_samples]
+    partial_train_data = np.concatenate(
+        [train_data[:i * num_val_samples],
+        train_data[(i + 1) * num_val_samples:]],
+        axis=0
+    )
+    partial_train_targets = np.concatenate(
+        [train_targets[:i * num_val_samples],
+        train_targets[(i + 1) * num_val_samples:]],
+        axis=0
+    )
+    model = build_model()
+    history = model.fit(
+        partial_train_data,
+        partial_train_targets,
+        epochs= num_epochs,
+        batch_size=16,
+        verbose=0,
+        validation_data=(val_data, val_targets)
+    )
+    mae_history = history.history["val_mae"]
+    all_mae_histories.append(mae_history)
+
+
+# listing 4.28
+
+average_mae_history = [np.mean([x[i] for x in all_mae_histories]) for i in range(num_epochs)]
+
+# listing 4.29
+
+plt.plot(range(1, len(average_mae_history) + 1), average_mae_history)
+plt.xlabel("Epochs")
+plt.ylabel("Validation mae")
+# plt.show()
+
+
+# listing 4.30
+
+truncated_mae_history = average_mae_history[10:]
+plt.plot(range(1, len(truncated_mae_history) + 1), truncated_mae_history)
+plt.xlabel("Epochs")
+plt.ylabel("Validation mae")
+# plt.show()
+
+# listing 4.31 training the final model
+
+model = build_model()
+model.fit(train_data, train_targets, epochs=130, batch_size=16, verbose=0)
+test_mse_score, test_mae_score = model.evaluate(test_data, test_targets)
+
+# plt.plot(range(1, len(truncated_mae_history) + 1), truncated_mae_history)
+# plt.xlabel("Epochs")
+# plt.ylabel("Validation mae")
+
+print("Final result, test_mae_score: ", test_mae_score)
+
+# generating predictions on new data
