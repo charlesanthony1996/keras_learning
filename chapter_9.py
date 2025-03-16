@@ -109,7 +109,7 @@ history = model.fit(
     validation_data = (val_input_imgs, val_targets)
 )
 
-epochs = range(1,len(history.history["loss"] + 1) + 1)
+epochs = range(1,len(history.history["loss"]) + 1)
 loss = history.history["loss"]
 val_loss = history.history["val_loss"]
 plt.figure()
@@ -182,5 +182,65 @@ def residual_block(x, filters, pooling=False):
     return x
 
 # first block
+
+x = residual_block(x, filters=32, pooling=True)
+x = residual_block(x, filters=64, pooling=True)
+x = residual_block(x, filters=128, pooling=False)
+
+x = layers.GlobalAveragePooling2D()(x)
+outputs = layers.Dense(1, activation="sigmoid")(x)
+model = keras.Model(inputs = inputs, outputs=outputs)
+model.summary()
+
+
+# listing 9.4 how not to use batch normalization
+
+x = layers.Conv2D(32, 3, activation="relu")(x)
+x = layers.BatchNormalization()(x)
+
+# listing 9.5 how to use batch normalization: the activation comes last 
+
+x = layers.Conv2D(32, 3, use_bias=False)(x)
+x = layers.BatchNormalization()(x)
+x = layers.Activation("relu")(x)
+
+data_augmentation = keras.Sequential(
+    [
+        layers.RandomFlip("horizontal"),
+        layers.RandomRotation(0.1),
+        layers.RandomZoom(0.2),
+    ]
+)
+
+inputs = keras.Input(shape=(180, 180, 3))
+x = data_augmentation(inputs)
+
+
+x = layers.Rescaling(1./255)(inputs)
+x = layers.Conv2D(filters=32, kernel_size=5, use_bias=False)(x)
+
+for size in [32, 64, 128, 256]:
+    residual = x
+
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation("relu")(x)
+    x = layers.SeperableConv2D(size, 3, padding="same", use_bias=False)(x)
+
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation("relu")(x)
+    x = layers.SeperableConv2D(size, 3, padding="same", use_bias=False)(x)
+
+    x = layers.MaxPooling2D(3, strides=2, padding="same")(x)
+
+    residual = layers.Conv2D(size, 1, strides=2, padding="same", use_bias=False)(residual)
+    x = layers.add([x, residual])
+
+
+x = layers.GlobalAveragePooling2D()(x)
+x = layers.Dropout(0.5)(x)
+
+outputs = layers.Dense(1, activation="sigmoid")(x)
+model = keras.Model(inputs=inputs, outputs=outputs)
+
 
 
