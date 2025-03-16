@@ -244,3 +244,10 @@ model = keras.Model(inputs=inputs, outputs=outputs)
 
 
 
+# 9.4.1 visualizing intermediate activations
+
+from tensorflow import keras
+model = keras.models.load_model("convnet_from_scratch_with_augmentation.keras")
+
+print("Summary: ", model.summary())
+
