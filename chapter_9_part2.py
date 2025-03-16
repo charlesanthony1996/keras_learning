@@ -26,3 +26,16 @@ plt.imshow(img_tensor[0].astype("uint8"))
 plt.show()
 
 
+# listing 9.8 instatiating a model that returns layer activations
+
+from tensorflow.keras import layers
+
+layer_outputs = []
+layer_names = []
+
+for layer in model.layers:
+    if isinstance(layer, (layer.Conv2D, layers.MaxPooling2D)):
+        layer_outputs.append(layer.output)
+        layer_names.append(layer.name)
+
+activation_model = keras.Model(inputs=model.input)
