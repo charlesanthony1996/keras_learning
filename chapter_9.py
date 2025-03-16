@@ -102,9 +102,85 @@ callbacks = [keras.callbacks.ModelCheckpoint("oxford_segmentation.keras", save_b
 history = model.fit(
     train_input_imgs,
     train_targets,
-    epochs = 50,
+    # epochs = 50,
+    epochs = 10,
     callbacks = callbacks,
     batch_size = 64,
     validation_data = (val_input_imgs, val_targets)
 )
+
+epochs = range(1,len(history.history["loss"] + 1) + 1)
+loss = history.history["loss"]
+val_loss = history.history["val_loss"]
+plt.figure()
+plt.plot(epochs, loss, "bo", label="Training loss")
+plt.plot(epochs, val_loss, "b", label="Validation loss")
+plt.title("Training and validation loss")
+plt.legend()
+plt.show()
+
+
+from tensorflow.keras.utils import array_to_img
+
+model = keras.models.load_model("oxford_segmentation.keras")
+
+i = 4
+test_image = val_input_imgs[i]
+plt.axis("off")
+plt.imshow(array_to_img(test_image))
+
+
+mask = model.predict(np.expand_dims(test_image, 0))[0]
+
+def display_mask(pred):
+    mask = np.argmax(pred, axis = 1)
+    mask *= 127
+    plt.axis("off")
+    plt.imshow(mask)
+
+
+display_mask(mask)
+
+
+# listing 9.2 residual block where the number of filters changes
+
+from tensorflow import keras
+from tensorflow.keras import layers
+
+inputs = keras.Input(shape=(32, 32, 3))
+x = layers.Conv2D(32, 3, activation="relu")(inputs)
+residual = x
+x = layers.Conv2D(64, 3, activation="relu", padding="same")(x)
+residual = layers.Conv2D(64, 1)(residual)
+x = layers.add([x, residual])
+
+
+# listing 9.3 case where the target block includes a max pooling layer
+
+inputs = keras.Input(shape=(32, 32, 3))
+x = layers.Conv2D(32, 3, activation="relu")(inputs)
+residual = x
+x = layers.Conv2D(64, 3, activation="relu", padding="same")(x)
+x = layers.MaxPooling2D(2, padding="same")(x)
+residual = layers.Conv2D(64, 1, strides=2)(residual)
+x = layers.add([x, residual])
+
+inputs = keras.Input(shape=(32, 32, 3))
+x = layers.Rescaling(1./255)(inputs)
+
+def residual_block(x, filters, pooling=False):
+    residual = x
+    x = layers.Conv2D(filters, 3, activation="relu", padding="same")(x)
+    x = layers.Conv2D(filters, 3, activation="relu", padding="same")(x)
+
+    if pooling:
+        x = layers.MaxPooling2D(2, padding="same")(x)
+        residual = layers.Conv2D(filters, 1, strides=2)(residual)
+    elif filters != residual.shape[-1]:
+        residual = layers.Conv2D(filters, 1)(residual)
+    x = layers.add([x, residual])
+    return x
+
+# first block
+
 
