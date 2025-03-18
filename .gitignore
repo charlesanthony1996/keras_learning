@@ -29,3 +29,12 @@ images.tar.gz.1
 .images.tar.gz.1
 oxford_segmentation.keras
 .oxford_segmentation.keras
+__MACOSX/
+annotations.tar.gz.1
+images.tar.gz.2
+jena_climate_2009_2016.csv
+jena_climate_2009_2016.csv.zip
+.annotations.tar.gz.1
+.images.tar.gz.2
+.jena_climate_2009_2016.csv
+.jena_climate_2009_2016.csv.zip

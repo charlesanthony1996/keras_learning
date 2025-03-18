@@ -291,4 +291,28 @@ for layer in model.layers:
         layer_outputs.append(layer.output)
         layer_names.append(layer.name)
 
-activation_model = keras.Model(inputs=model.input)
+activation_model = keras.Model(inputs=model.input, outputs=layer_outputs)
+
+# listing 9.9 using the model to compute layer activations
+
+activations = activation_model.predict(img_tensor)
+
+first_layer_activation = activations[0]
+print("first layer activation: ", first_layer_activation)
+print(first_layer_activation.shape)
+
+# listing 9.10 visualizing the fifth channel
+
+import matplotlib.pyplot as plt
+plt.matshow(first_layer_activation[0, :, :, 5], cmap="virtual")
+
+# listing 9.11 visualizing every channel in every intermediate activation
+
+images_per_row = 16
+for layer_row, layer_activation in zip(layer_names, activations):
+    n_features = layer_activation.shape[-1]
+    size = layer_activation.shape[1]
+    n_cols = n_features // images_per_row
+    display_grid = np.zeros((size + 1) * n_cols - 1)
+
+    
