@@ -222,3 +222,55 @@ print(f"Test mae: {model.evaluate(test_dataset)[1]:.2f}")
 
 # listing 10.15 numpy implementation of a simple rnn
 
+import numpy as np
+timesteps = 100
+input_features = 32
+output_features = 64
+inputs = np.random.random((timesteps, input_features))
+state_t = np.zeros((output_features))
+w = np.random.random((output_features, input_features))
+u = np.random.random((output_features, output_features))
+b = np.random.random((output_features,))
+successive_inputs = []
+for input_t in inputs:
+    output_t = np.tanh(np.dot(w, input_t) + np.dot(u, state_t) + b)
+    successive_inputs.append(output_t)
+    state_t = output_t
+
+final_output_sequence = np.stack(successive_inputs, axis = 0)
+
+# listing 10.16 an rnn layer that can process sequences of any length
+
+num_features = 14
+inputs = keras.Input(shape=(None, num_features))
+outputs = layers.SimpleRNN(16)(inputs)
+
+# listing 10.17 an rnn layer that returns only its last output step
+
+num_features = 17
+steps = 120
+inputs = keras.Input(shape=(steps, num_features))
+outputs = layers.SimpleRNN(16, return_sequences=False)(inputs)
+print(outputs.shape)
+
+
+# listing 10.18 an rnn layer that returns its full output sequence
+
+num_features = 14
+steps = 120
+inputs = keras.Input(shape=(steps, num_features))
+outputs = layers.SimpleRNN(16, return_sequences=True)(inputs)
+print(outputs.shape)
+
+# listing 10.19 stacking rnn layers
+
+inputs = keras.Input(shape=(steps, num_features))
+x = layers.SimpleRNN(16, return_sequences=True)(inputs)
+x = layers.SimpleRNN(16, return_sequences=True)(x)
+outputs = layers.SimpleRNN(16)(x)
+
+# y = activation(dot(state_t, u) + dot(input_t, w) + b)
+
+# listing 10.20 pseudocode details of the lstm architecture (1/2)
+
+# output_t = activation(dot(state_t, Uo) + dot())
