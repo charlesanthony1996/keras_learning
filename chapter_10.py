@@ -274,3 +274,55 @@ outputs = layers.SimpleRNN(16)(x)
 # listing 10.20 pseudocode details of the lstm architecture (1/2)
 
 # output_t = activation(dot(state_t, Uo) + dot())
+
+# listing 10.22 training and evaluating a dropout regularized lstm
+
+inputs = keras.Input(shape=(sequence_length, raw_data.shape[-1]))
+x = layers.LSTM(32, recurrent_dropout=0.25)(inputs)
+x = layers.Dropout(0.5)(x)
+outputs = layers.Dense(1)(x)
+model = keras.Model(inputs, outputs)
+
+callbacks = [
+    keras.callbacks.ModelCheckpoint("jena_lstm_dropout.keras", save_best_only=True)
+]
+
+model.compile(optimizer="rmsprop", loss="mse", metrics=["mae"])
+history = model.fit(
+    train_dataset,
+    epochs=50,
+    validation_data = val_dataset,
+    callbacks=callbacks
+)
+
+# listing 10.23 training and evaluating a dropout regularized, stacked gru model
+
+inputs = keras.Input(shape=(sequence_length, raw_data.shape[-1]))
+x = layers.GRU(32, recurrent_dropout = 0.5, return_sequences=True)(inputs)
+x = layers.GRU(32, recurrent_dropout = 0.5)(x)
+x = layers.Dropout(0.5)(x)
+outputs = layers.Dense(1)(x)
+
+model = keras.Model(inputs, outputs)
+
+callbacks = [
+    keras.callbacks.ModelCheckpoint("jena_stacked_gru_dropout.keras", save_best_only=True)
+]
+
+model.compile(optimizer="rmsprop", loss="mse", metrics=["mae"])
+
+history = model.fit(train_dataset, epochs=50, validation_data=val_dataset, callbacks=callbacks)
+
+model = keras.models.load_model("jena_stacked_gru_dropout.keras")
+print(f"Test mae: {model.evaluate(test_dataset)[1]:.2f}")
+
+# listing 10.24 training and evaluating a bidirectional lstm
+
+inputs = keras.Input(shape=(sequence_length, raw_data.shape[-1]))
+x = layers.Bidirectional(layers.LSTM(16))(inputs)
+outputs = layers.Dense(1)(x)
+model = keras.Model(inputs, outputs)
+
+model.compile(optimizer="rmsprop", loss="mse", metrics=["mae"])
+
+history = model.fit(train_dataset, epochs=10, validation_data=val_dataset)
