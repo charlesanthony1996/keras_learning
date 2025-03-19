@@ -40,3 +40,7 @@ jena_climate_2009_2016.csv.zip
 .jena_climate_2009_2016.csv.zip
 jena_dense.keras
 .jena_dense.keras
+aclImdb/
+aclImdb_v1.tar.gz
+.aclImdb/
+.aclImdb_v1.tar.gz
