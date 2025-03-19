@@ -150,3 +150,75 @@ model = keras.models.load_model("jena_dense.keras")
 print(f"Test mae: {model.evaluate(test_dataset)[1]:.2f}")
 
 
+# listing 10.11 plotting results
+
+import matplotlib.pyplot as plt
+# loss = history.history["mae"]
+# val_loss = history.history["val_mae"]
+# epochs = range(1, len(loss) + 1)
+# plt.figure()
+# plt.plot(epochs, loss, "bo", label="Training mae")
+# plt.plot(epochs, val_loss, "b", label="Validation mae")
+# plt.title("Training and validation mae")
+# plt.show()
+
+
+
+
+# listing 10.12 a simple lstm based model
+
+inputs = keras.Input(shape=(sequence_length, raw_data.shape[-1]))
+x = layers.Conv1D(8, 24, activation="relu")(inputs)
+x = layers.MaxPooling1D(2)(x)
+x = layers.Conv1D(8, 12, activation="relu")(x)
+x = layers.MaxPooling1D(2)(x)
+x = layers.Conv1D(8, 6, activation="relu")(x)
+x = layers.GlobalAveragePooling1D()(x)
+outputs = layers.Dense(1)(x)
+model = keras.Model(inputs, outputs)
+
+
+callbacks = [
+    keras.callbacks.ModelCheckpoint("jena_conv.keras", save_best_only=True)
+]
+
+model.compile(optimizer="rmsprop", loss="mse", metrics=["mae"])
+history = model.fit(train_dataset, epochs=10, validation_data=val_dataset, callbacks=callbacks)
+
+model = keras.models.load_model("jena_conv.keras")
+print(f"Test mae: {model.evaluate(test_dataset)[1]:.2f}")
+
+# listing 10.12 a simple lstm based model
+
+inputs = keras.Input(shape=(sequence_length, raw_data.shape[-1]))
+x = layers.LSTM(16)(inputs)
+outputs = layers.Dense(1)(x)
+model = keras.Model(inputs, outputs)
+
+callbacks = [
+    keras.callbacks.ModelCheckpoint("jena_lstm.keras", save_best_only=True)
+]
+
+model.compile(optimizer="rmsprop", loss="mse", metrics=["mae"])
+history = model.fit(train_dataset, epochs=10, validation_data=val_dataset, callbacks=callbacks)
+
+model = keras.models.load_model("jena_lstm.keras")
+print(f"Test mae: {model.evaluate(test_dataset)[1]:.2f}")
+
+
+# listing 10.13 pseudocode rnn
+
+# state_t = 0
+# for input_t in input_sequence:
+#     output_t = f(input_t, state_t)
+#     state_t = output_t
+
+# listing 10.14 mode detailed pseudocode for the rnn
+
+# state_t = 0
+# for input_t in input_sequence:
+#     output_t = activation(dot(w, input_t) + dot(u, state_t) + b)
+#     state_t = output_t
+
+# listing 10.15 numpy implementation of a simple rnn
+
