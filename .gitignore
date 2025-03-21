@@ -44,3 +44,5 @@ aclImdb/
 aclImdb_v1.tar.gz
 .aclImdb/
 .aclImdb_v1.tar.gz
+binary_lgram.keras
+.binary_lgram.keras
