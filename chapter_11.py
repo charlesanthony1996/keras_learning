@@ -155,3 +155,24 @@ model.fit(
 model = keras.models.load_model("binary_2gram.keras")
 print(f"Test accuracy: {model.evaluate(binary_2gram_test_ds)[1]:.3f}")
 
+# listing 11.9 configuring the text vectorization layer to return token counts
+
+text_vectorization = TextVectorization(
+    ngrams=2,
+    max_tokens=20000,
+    output_mode="count"
+)
+
+
+
+# listing 11.10 configuring text vectorization to return tf idf weighted outputs
+
+text_vectorization = TextVectorization(
+    ngrams=2,
+    max_tokens=20000,
+    output_mode="tf_idf"
+)
+
+# listing 11.11 training and testing the tf idf bigram model
+
+text_vectorization.adapt(text_only_train_ds)
