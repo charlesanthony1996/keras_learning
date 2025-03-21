@@ -114,3 +114,44 @@ print(f"Test acc: {model.evaluate(binay_lgram_test_ds)[1]:.3f}")
 
 # listing 11.7 configuring the text vectorization layer to return bigrams
 
+text_vectorization = TextVectorization(
+    ngrams= 2,
+    max_tokens=20000,
+    output_mode="multi_hot"
+)
+
+# listing 11.8 training and testing the binary bigram model
+
+text_vectorization.adapt(text_only_train_ds)
+binary_2gram_train_ds = train_ds.map(
+    lambda x, y: (text_vectorization(x), y),
+    num_parallel_calls=4
+)
+
+binary_2gram_val_ds = val_ds.map(
+    lambda x, y: (text_vectorization(x), y),
+    num_parallel_calls=4
+)
+
+binary_2gram_test_ds = test_ds.map(
+    lambda x, y: (text_vectorization(x), y),
+    num_parallel_calls=4
+)
+
+
+model = get_model()
+model.summary()
+callbacks = [
+    keras.callbacks.ModelCheckpoint("binary_2gram.keras", save_best_only=True)
+]
+
+model.fit(
+    binary_2gram_train_ds.cache(), 
+    validation_data=binary_2gram_val_ds.cache(),
+    epochs=10,
+    callbacks=callbacks
+)
+
+model = keras.models.load_model("binary_2gram.keras")
+print(f"Test accuracy: {model.evaluate(binary_2gram_test_ds)[1]:.3f}")
+
