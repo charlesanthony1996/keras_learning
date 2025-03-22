@@ -48,4 +48,5 @@ binary_lgram.keras
 .binary_lgram.keras
 binary_2gram.keras
 .binary_2gram.keras
-
+one_hot_bidir_lstm.keras
+.one_hot_bidir_lstm.keras
