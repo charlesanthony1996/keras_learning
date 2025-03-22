@@ -167,12 +167,126 @@ text_vectorization = TextVectorization(
 
 # listing 11.10 configuring text vectorization to return tf idf weighted outputs
 
-text_vectorization = TextVectorization(
-    ngrams=2,
-    max_tokens=20000,
-    output_mode="tf_idf"
-)
+# text_vectorization = TextVectorization(
+#     ngrams=2,
+#     max_tokens=20000,
+#     output_mode="tf_idf"
+# )
 
 # listing 11.11 training and testing the tf idf bigram model
 
+# import tensorflow as tf
+# with tf.device('/CPU:0'):
+#     text_vectorization.adapt(text_only_train_ds)
+# text_vectorization.adapt(text_only_train_ds)
+
+# tfidf_2gram_train_ds = train_ds.map(
+#     lambda x, y: (text_vectorization(x), y),
+#     num_parallel_calls=4
+# )
+
+# tfidf_2gram_val_ds = val_ds.map(
+#     lambda x, y: (text_vectorization(x), y),
+#     num_parallel_calls=4
+# )
+
+# tfidf_2gram_test_ds = test_ds.map(
+#     lambda x, y: (text_vectorization(x), y),
+#     num_parallel_calls=4
+# )
+
+# model = get_model()
+# model.summary()
+
+# callbacks = [
+#     keras.callbacks.ModelCheckpoint("tfidf_2gram.keras", save_best_only=True)
+# ]
+
+# model.fit(
+#     tfidf_2gram_train_ds.cache(),
+#     validation_data=tfidf_2gram_val_ds.cache(),
+#     epochs=10,
+#     callbacks=callbacks
+# )
+
+# model = keras.models.load_model("tfidf_2gram.keras")
+# print(f"Test acc: {model.evaluate(tfidf_2gram_test_ds)[1]:.3f}")
+
+# listing 11.12 preparing integer sequence datasets
+
+from tensorflow.keras import layers
+
+max_length = 600
+max_tokens = 20000
+
+text_vectorization = layers.TextVectorization(
+    max_tokens= max_tokens,
+    output_mode="int",
+    output_sequence_length=max_length
+)
+
 text_vectorization.adapt(text_only_train_ds)
+
+int_train_ds = train_ds.map(
+    lambda x, y: (text_vectorization(x), y),
+    num_parallel_calls=4
+)
+
+int_val_ds = val_ds.map(
+    lambda x, y: (text_vectorization(x), y),
+    num_parallel_calls=4
+)
+
+int_test_ds = test_ds.map(
+    lambda x, y: (text_vectorization(x), y),
+    num_parallel_calls=4
+)
+
+
+# listing 11.13 a sequence model built on one hot encoded sequences
+
+import tensorflow as tf
+
+class one_hot_layer(layers.Layer):
+    def __init__(self, depth):
+        super().__init__()
+        self.depth = depth
+
+    def call(self, inputs):
+        return tf.one_hot(inputs, depth=self.depth)
+
+
+
+
+inputs = keras.Input(shape=(None,), dtype="int64")
+# embedded = tf.one_hot(inputs, depth=max_tokens)
+embedded = one_hot_layer(depth=max_tokens)(inputs)
+
+x = layers.Bidirectional(layers.LSTM(32))(embedded)
+x = layers.Dropout(0.5)(x)
+
+outputs = layers.Dense(1, activation="sigmoid")(x)
+model = keras.Model(inputs, outputs)
+
+model.compile(
+    optimizer="rmsprop",
+    loss="binary_crossentropy",
+    metrics=["accuracy"]
+)
+
+model.summary()
+
+# listing 11.14 training a first basic sequence model
+
+callbacks = [
+    keras.callbacks.ModelCheckpoint("one_hot_bidir_lstm.keras", save_best_only=True)
+]
+
+model.fit(
+    int_train_ds,
+    validation_data=int_val_ds,
+    epochs=10,
+    callbacks=callbacks
+)
+
+
