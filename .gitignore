@@ -50,3 +50,5 @@ binary_2gram.keras
 .binary_2gram.keras
 one_hot_bidir_lstm.keras
 .one_hot_bidir_lstm.keras
+embeddings_bidri_gru.keras
+.embeddings_bidri_gru.keras
