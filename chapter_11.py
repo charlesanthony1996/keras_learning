@@ -289,4 +289,45 @@ model.fit(
     callbacks=callbacks
 )
 
+model = keras.models.load_model("one_hot_bidir_lstm.keras")
+
+print(f"Test acc: {model.evaluate(int_test_ds)[1]:.3f}")
+
+# listing 11.15 instatiating an embedding layer
+
+embedding_layer = layers.Embedding(input_dim = max_tokens, output_dim=256)
+
+# listing 11.16 model that uses an embedding layer trained from scratch
+
+inputs = keras.Input(shape=(None,), dtype="int64")
+embedded = layers.Embedding(input_dim=max_tokens, output_dim=256)(inputs)
+
+x = layers.Bidirectional(layers.LSTM(32))(embedded)
+x = layers.Dropout(0.5)(x)
+
+outputs = layers.Dense(1, activation="sigmoid")(x)
+model = keras.Model(inputs, outputs)
+
+model.compile(
+    optimizer="rmsprop",
+    loss="binary_crossentropy",
+    metrics=["accuracy"]
+)
+
+model.summary()
+
+callbacks = [
+    keras.callbacks.ModelCheckpoint("embeddings_bidir_gru.keras", save_best_only=True)
+]
+
+model.fit(
+    int_train_ds,
+    validation_data=int_val_ds,
+    epochs=10,
+    callbacks=callbacks
+)
+
+model = keras.models.load_model("embeddings_bidri_gru.keras")
+
+print(f"Test acc: {model.evaluate(int_test_ds)[1]:.3f}")
 
