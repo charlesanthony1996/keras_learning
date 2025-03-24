@@ -52,3 +52,13 @@ one_hot_bidir_lstm.keras
 .one_hot_bidir_lstm.keras
 embeddings_bidri_gru.keras
 .embeddings_bidri_gru.keras
+glove.6B.100d.txt
+glove.6B.200d.txt
+glove.6B.300d.txt
+glove.6B.50d.txt
+glove.6B.zip
+.glove.6B.100d.txt
+.glove.6B.200d.txt
+.glove.6B.300d.txt
+.glove.6B.50d.txt
+.glove.6B.zip

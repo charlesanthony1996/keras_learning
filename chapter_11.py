@@ -331,3 +331,39 @@ model = keras.models.load_model("embeddings_bidri_gru.keras")
 
 print(f"Test acc: {model.evaluate(int_test_ds)[1]:.3f}")
 
+# listing 11.17 using an embedding layer with masking method
+
+inputs = keras.Input(shape=(None,), dtype="int64")
+embedded = layers.Embedding(
+    input_dim=max_tokens,
+    output_dim=256,
+    mask_zero=True
+)(inputs)
+
+x = layers.Bidirectional(layers.LSTM(32))(embedded)
+x = layers.Dropout(0.5)(x)
+
+outputs = layers.Dense(1, activation="sigmoid")(x)
+model = keras.Model(inputs, outputs)
+model.compile(
+    optimizer="rmsprop",
+    loss="binary_crossentropy",
+    metrics=["accuracy"]
+)
+
+model.summary()
+callbacks = [
+    keras.callbacks.ModelCheckpoint("embeddings_bidir_gru_with_masking.keras", save_best_only=True)
+]
+
+model.fit(
+    int_train_ds,
+    validation_data=int_val_ds,
+    epochs=10,
+    callbacks=callbacks
+)
+
+
+model = keras.models.load_model("embeddings_bidir_gru_with_masking.keras")
+print(f"Testing acc: {model.evaluate(int_test_ds)[1]:.3f}")
+
