@@ -31,7 +31,7 @@ val_ds = keras.utils.text_dataset_from_directory(
 )
 
 test_ds = keras.utils.text_dataset_from_directory(
-    "aclImdb/test", 
+    "aclImdb/test", batch_size=batch_size
 )
 
 # listing 11.2 displaying the shapes and dtypes of the first batch
@@ -62,7 +62,7 @@ binary_lgram_val_ds = val_ds.map(
     lambda x, y: (text_vectorization(x), y), num_parallel_calls=4
 )
 
-binay_lgram_test_ds = test_ds.map(
+binary_lgram_test_ds = test_ds.map(
     lambda x, y: (text_vectorization(x), y), num_parallel_calls=4 
 )
 
@@ -110,7 +110,7 @@ model.fit(
     callbacks=callbacks
 )
 model = keras.models.load_model("binary_lgram.keras")
-print(f"Test acc: {model.evaluate(binay_lgram_test_ds)[1]:.3f}")
+print(f"Test acc: {model.evaluate(binary_lgram_test_ds)[1]:.3f}")
 
 # listing 11.7 configuring the text vectorization layer to return bigrams
 
