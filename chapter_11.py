@@ -245,53 +245,53 @@ int_test_ds = test_ds.map(
 
 # listing 11.13 a sequence model built on one hot encoded sequences
 
-import tensorflow as tf
+# import tensorflow as tf
 
-class one_hot_layer(layers.Layer):
-    def __init__(self, depth):
-        super().__init__()
-        self.depth = depth
+# class one_hot_layer(layers.Layer):
+#     def __init__(self, depth):
+#         super().__init__()
+#         self.depth = depth
 
-    def call(self, inputs):
-        return tf.one_hot(inputs, depth=self.depth)
-
-
+#     def call(self, inputs):
+#         return tf.one_hot(inputs, depth=self.depth)
 
 
-inputs = keras.Input(shape=(None,), dtype="int64")
-# embedded = tf.one_hot(inputs, depth=max_tokens)
-embedded = one_hot_layer(depth=max_tokens)(inputs)
 
-x = layers.Bidirectional(layers.LSTM(32))(embedded)
-x = layers.Dropout(0.5)(x)
 
-outputs = layers.Dense(1, activation="sigmoid")(x)
-model = keras.Model(inputs, outputs)
+# inputs = keras.Input(shape=(None,), dtype="int64")
+# # embedded = tf.one_hot(inputs, depth=max_tokens)
+# embedded = one_hot_layer(depth=max_tokens)(inputs)
 
-model.compile(
-    optimizer="rmsprop",
-    loss="binary_crossentropy",
-    metrics=["accuracy"]
-)
+# x = layers.Bidirectional(layers.LSTM(32))(embedded)
+# x = layers.Dropout(0.5)(x)
 
-model.summary()
+# outputs = layers.Dense(1, activation="sigmoid")(x)
+# model = keras.Model(inputs, outputs)
 
-# listing 11.14 training a first basic sequence model
+# model.compile(
+#     optimizer="rmsprop",
+#     loss="binary_crossentropy",
+#     metrics=["accuracy"]
+# )
 
-callbacks = [
-    keras.callbacks.ModelCheckpoint("one_hot_bidir_lstm.keras", save_best_only=True)
-]
+# model.summary()
 
-model.fit(
-    int_train_ds,
-    validation_data=int_val_ds,
-    epochs=10,
-    callbacks=callbacks
-)
+# # listing 11.14 training a first basic sequence model
 
-model = keras.models.load_model("one_hot_bidir_lstm.keras")
+# callbacks = [
+#     keras.callbacks.ModelCheckpoint("one_hot_bidir_lstm.keras", save_best_only=True)
+# ]
 
-print(f"Test acc: {model.evaluate(int_test_ds)[1]:.3f}")
+# model.fit(
+#     int_train_ds,
+#     validation_data=int_val_ds,
+#     epochs=10,
+#     callbacks=callbacks
+# )
+
+# model = keras.models.load_model("one_hot_bidir_lstm.keras")
+
+# print(f"Test acc: {model.evaluate(int_test_ds)[1]:.3f}")
 
 # listing 11.15 instatiating an embedding layer
 
@@ -327,7 +327,7 @@ model.fit(
     callbacks=callbacks
 )
 
-model = keras.models.load_model("embeddings_bidri_gru.keras")
+model = keras.models.load_model("embeddings_bidir_gru.keras")
 
 print(f"Test acc: {model.evaluate(int_test_ds)[1]:.3f}")
 
@@ -366,4 +366,68 @@ model.fit(
 
 model = keras.models.load_model("embeddings_bidir_gru_with_masking.keras")
 print(f"Testing acc: {model.evaluate(int_test_ds)[1]:.3f}")
+
+# listing 11.18 parsing the glove word embeddings file
+
+import numpy as np
+path_to_glove_file = "glove.6B.100d.txt"
+
+
+embeddings_index = {}
+with open(path_to_glove_file) as f:
+    for line in f:
+        word, coefs = line.split(maxsplit=1)
+        coefs = np.fromstring(coefs, "f", sep=" ")
+        embeddings_index[word] = coefs
+
+print(f"Found {len(embeddings_index)} word vectors")
+
+# listing 11.19 preparing the glove word embeddings matrix
+
+embedding_dim = 100
+
+vocabulary = text_vectorization.get_vocabulary()
+word_index = dict(zip(vocabulary, range(len(vocabulary))))
+
+embedding_matrix = np.zeros((max_tokens, embedding_dim))
+for word, i in word_index.items():
+    if i < max_tokens:
+        embedding_vector = embeddings_index.get(word)
+    if embedding_vector is not None:
+        embedding_matrix[i] = embedding_vector
+
+
+embedding_layer = layers.Embedding(
+    max_tokens,
+    embedding_dim,
+    embeddings_initializer=keras.initializers.Constant(embedding_matrix),
+    trainable=False,
+    mask_zero=True
+)
+
+# listing 11.20 model that uses a pretrained embedding layer
+
+inputs = keras.Input(shape=(None,), dtype="int64")
+embedded = embedding_layer(inputs)
+x = layers.Bidirectional(layers.LSTM(32))(embedded)
+x = layers.Dropout(0.5)(x)
+
+outputs = layers.Dense(1, activation="sigmoid")(x)
+model.compile(
+    optimizer="rmsprop",
+    loss="binary_crossentropy",
+    metrics=["accuracy"]
+)
+
+model.summary()
+
+callbacks = [
+    keras.callbacks.ModelCheckpoint("glove_embeddings_sequence_model.keras", save_best_only=True)
+]
+
+model.fit(int_train_ds, validation_data=int_val_ds, epochs=10, callbacks=callbacks)
+
+model = keras.models.load_model("glove_embeddings_sequence_model.keras")
+print(f"Test acc: {model.evaluate(int_test_ds)[1]:.3f}")
+
 
