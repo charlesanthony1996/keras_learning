@@ -50,8 +50,8 @@ binary_2gram.keras
 .binary_2gram.keras
 one_hot_bidir_lstm.keras
 .one_hot_bidir_lstm.keras
-embeddings_bidri_gru.keras
-.embeddings_bidri_gru.keras
+embeddings_bidir_gru.keras
+.embeddings_bidir_gru.keras
 glove.6B.100d.txt
 glove.6B.200d.txt
 glove.6B.300d.txt
@@ -62,3 +62,13 @@ glove.6B.zip
 .glove.6B.300d.txt
 .glove.6B.50d.txt
 .glove.6B.zip
+embeddings_bidir_gru_with_masking.keras
+.embeddings_bidir_gru_with_masking.keras
+tfidf_2gram.keras
+.tfidf_2gram.keras
+checkpoint_path.keras
+.checkpoint_path.keras
+jena_conv.keras
+.jena_conv.keras
+jena_lstm.keras
+.jena_lstm.keras
