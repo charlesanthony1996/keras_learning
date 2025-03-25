@@ -475,24 +475,24 @@ class TransformerEncoder(layers.Layer):
         self.layernorm_1 = layers.LayerNormalization()
         self.layernorm_2 = layers.LayerNormalization()
 
-def call(self, inputs, mask=None):
-    if mask is not None:
-        mask = mask[:, tf.newaxis, :]
-    attention_output = self.attention(
-        inputs, inputs, attention_mask=mask
-    )
-    proj_input = self.layernorm_1(inputs + attention_output)
-    proj_output = self.dense_proj(proj_output)
-    return self.layernorm_2(proj_input + proj_output)
+    def call(self, inputs, mask=None):
+        if mask is not None:
+            mask = mask[:, tf.newaxis, :]
+        attention_output = self.attention(
+            inputs, inputs, attention_mask=mask
+        )
+        proj_input = self.layernorm_1(inputs + attention_output)
+        proj_output = self.dense_proj(proj_input)
+        return self.layernorm_2(proj_input + proj_output)
 
-def get_config(self):
-    config = super().get_config()
-    config.update({
-        "embed_dim": self.embed_dim,
-        "num_heads": self.num_heads,
-        "dense_dim": self.dense_dim
-    })
-    return config
+    def get_config(self):
+        config = super().get_config()
+        config.update({
+            "embed_dim": self.embed_dim,
+            "num_heads": self.num_heads,
+            "dense_dim": self.dense_dim
+        })
+        return config
 
 
 def layer_normalization(batch_of_sequences):
@@ -567,7 +567,8 @@ class PositionalEmbedding(layers.Layer):
         return embedded_tokens + embedded_positions
     
     def compute_mask(self, inputs, mask=None):
-        return tf.math.not_equal(inputs, 0)
+        # return tf.math.not_equal(inputs, 0)
+        return keras.ops.not_equal(inputs, 0)
     
     def get_config(self):
         config = super().get_config()
@@ -622,7 +623,73 @@ print(f"Test acc: {model.evaluate(int_test_ds)[1]:.3f}")
 
 # examples with the dataset
 # !wget http:/ /storage.googleapis.com/download.tensorflow.org/data/spa-eng.zip
+# !unzip -q spa-eng.zip
+
+text_file = "spa-eng/spa.txt"
+with open(text_file) as f:
+    lines = f.read().split("\n")[:-1]
+text_pairs = []
+
+for line in lines:
+    english, spanish = lines.split("\t")
+    spanish = "[start] " + spanish + " [end]"
+    text_pairs.append((english, spanish))
+
+import random
+print(random.choice(text_pairs))
+
+# shuffling them and split them into the usual training, validation and test sets
+
+random.shuffle(text_pairs)
+num_val_samples = int(0.15 * len(text_pairs))
+num_train_samples = len(text_pairs) - 2 * num_val_samples
+train_pairs = text_pairs[:num_train_samples]
+val_pairs = text_pairs[num_train_samples:num_train_samples + num_val_samples]
+test_pairs = text_pairs[num_train_samples + num_val_samples:]
 
 
 # listing 11.26 vectorizing the english and spanish text pairs
 
+import tensorflow as tf
+import string
+import re
+
+strip_chars = string.punctuation + "¿"
+strip_chars = strip_chars.replace("[", "")
+strip_chars = strip_chars.replace("]", "")
+
+def custom_standarization(input_string):
+    lowercase = tf.strings.lower(input_string)
+    return tf.strings.regex_replace(
+        lowercase, f"[{re.escape(strip_chars)}]", ""
+    )
+
+vocab_size = 20000
+sequence_length = 20
+
+source_vectorization = layers.TextVectorization(
+    max_tokens=vocab_size,
+    output_mode="int",
+    output_sequence_length=sequence_length
+)
+
+target_vectorization = layers.TextVectorization(
+    max_tokens=vocab_size,
+    output_mode="int",
+    output_sequence_length=sequence_length + 1,
+    standardize=custom_standarization
+)
+
+train_english_texts = [pair[0] for pair in train_pairs]
+train_spanish_texts = [pair[1] for pair in train_pairs]
+source_vectorization.adapt(train_english_texts)
+target_vectorization.adapt(train_spanish_texts)
+
+# listing 11.27 preparing datasets for the transition task
+
+batch_size = 64
+
+def format_dataset(eng, spa):
+    pass
+
+# just some text

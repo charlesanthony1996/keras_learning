@@ -76,3 +76,11 @@ embeddings_bidir_gru_with_masking.keras
 .embeddings_bidir_gru_with_masking.keras
 glove_embeddings_sequence_model.keras
 .glove_embeddings_sequence_model.keras
+glove.6B.zip.1
+.glove.6B.zip.1
+spa-eng.zip
+spa-eng/
+transformer_encoder.keras
+.spa-eng.zip
+.spa-eng/
+.transformer_encoder.keras
