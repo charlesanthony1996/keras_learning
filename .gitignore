@@ -74,3 +74,5 @@ jena_lstm.keras
 .jena_lstm.keras
 embeddings_bidir_gru_with_masking.keras
 .embeddings_bidir_gru_with_masking.keras
+glove_embeddings_sequence_model.keras
+.glove_embeddings_sequence_model.keras
