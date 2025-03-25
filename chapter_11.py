@@ -690,6 +690,50 @@ target_vectorization.adapt(train_spanish_texts)
 batch_size = 64
 
 def format_dataset(eng, spa):
-    pass
+    eng = source_vectorization(eng)
+    spa = target_vectorization(spa)
+    return ({
+        "english": eng,
+        "spanish": spa[:, :-1],
+    }, spa[:, 1:])
 
-# just some text
+def make_dataset(pairs):
+    eng_texts, spa_texts = zip(*pairs)
+    eng_texts = list(eng_texts)
+    spa_texts = list(spa_texts)
+    dataset = tf.data.Dataset.from_tensor_slices((eng_texts, spa_texts))
+    dataset = dataset.batch(batch_size)
+    return dataset.shuffle(2048).prefetch(16).cache()
+
+train_ds = make_dataset(train_pairs)
+val_ds = make_dataset(val_ds)
+
+# heres what our dataset looks like
+
+for inputs, targets in train_ds.take(1):
+    print(f"inputs['english'].shape: { inputs['english'].shape}")
+    print(f"inputs['spanish'].shape: { inputs['spanish'].shape}")
+    print(f"targets.shape: { targets.shape }")
+
+
+inputs = keras.Input(shape=(sequence_length,), dtype="int64")
+x = layers.Embedding(input_dim=vocab_size, output_dim=128)(inputs)
+x = layers.LSTM(32, return_sequences=True)(x)
+outputs = layers.Dense(vocab_size, activation="softmax")(x)
+model = keras.Model(inputs, outputs)
+
+# listing 11.28 gru based encoder
+
+from tensorflow import keras
+from tensorflow.keras import layers
+
+embed_dim = 256
+latent_dim = 1024
+
+source = keras.Input(shape=(None,), dtype="int64", name="english")
+x = layers.Embedding(vocab_size, embed_dim, mask_zero=True)(source)
+encoded_source = layers.Bidirectional(
+    layers.GRU(latent_dim), merge_mode="sum"
+)(x)
+
+
