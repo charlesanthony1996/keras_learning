@@ -28,3 +28,30 @@ dataset = dataset.map(lambda x: tf.strings.regex_replace(x, "<br />", " "))
 
 # listing 12.4 preparing a text vectorization layer
 
+from tensorflow.keras.layers import TextVectorization
+
+sequence_length = 100
+vocab_size = 15000
+
+text_vectorization = TextVectorization(
+    max_tokens=vocab_size,
+    output_mode="int",
+    output_sequence_length=sequence_length
+)
+
+text_vectorization.adapt(dataset)
+
+
+
+# listing 12.5 setting up a language modelling dataset
+
+def prepare_lm_dataset(text_batch):
+    vectorized_sequences = text_vectorization(text_batch)
+    x = vectorized_sequences[:, :-1]
+    y = vectorized_sequences[:, 1:]
+    return x, y
+
+lm_dataset = dataset.map(prepare_lm_dataset, num_parallel_calls=4)
+
+# listing 12.6 a simple transformed based language model
+
