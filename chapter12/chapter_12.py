@@ -55,3 +55,4 @@ lm_dataset = dataset.map(prepare_lm_dataset, num_parallel_calls=4)
 
 # listing 12.6 a simple transformed based language model
 
+from tensorflow.keras import layers
