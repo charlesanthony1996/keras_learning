@@ -737,3 +737,93 @@ encoded_source = layers.Bidirectional(
 )(x)
 
 
+# listing 11.29 gru based decoder and the end to end model
+
+past_target = keras.Input(shape=(None,), dtype="int64", name="spanish")
+x = layers.Embedding(vocab_size, embed_dim, mask_zero=True)(past_target)
+decoder_gru = layers.GRU(latent_dim, return_sequences=True)
+x = decoder_gru(x, initial_state=encoded_source)
+x = layers.Dropout(0.5)(x)
+target_next_step = layers.Dense(vocab_size, activation="softmax")(x)
+seq2seq_rnn = keras.Model([source, past_target], target_next_step)
+
+# listing 11.30 training our recurrent sequence to sequence to model
+
+seq2seq_rnn.compile(
+    optimizer="rmsprop",
+    loss="sparse_cagtegorical_crossentropy",
+    metrics=["accuracy"]
+)
+
+seq2seq_rnn.fit(train_ds, epochs=15, validation_data=val_ds)
+
+# listing 11.31 translating new sentences with our rnn encoder and decoder
+
+import numpy as np
+spa_vocab = target_vectorization.get_vocabulary()
+spa_index_lookup = dict(zip(range(len(spa_vocab)), spa_vocab))
+max_decoded_sentence_length = 20
+
+def decode_sequence(input_sequence):
+    tokenized_input_sentence = source_vectorization([input_sequence])
+    decoded_sequence = "[start]"
+    for i in range(max_decoded_sentence_length):
+        tokenized_target_sentence = target_vectorization([decode_sequence])
+        next_token_predictions = seq2seq_rnn.predict(
+            [tokenized_input_sentence, tokenized_target_sentence])
+        sampled_token_index = np.argmax(next_token_predictions[0, i, :])
+        sampled_token = spa_index_lookup[sampled_token_index]
+        decoded_sequence += " " + sampled_token
+        if sampled_token == "[end]":
+            break
+    return decoded_sequence
+
+test_eng_texts = [pair[0] for pair in test_pairs]
+for _ in range(20):
+    input_sequence = random.choice(test_eng_texts)
+    print("-")
+    print(input_sequence)
+    print(decode_sequence(input_sequence))
+
+
+
+# listing 11.32 some sample results from the current translation model
+
+### some text here
+
+# listing 11.33 the transformer decoder
+
+class TransformerDecoder(layers.Layer):
+    def __init__(self, embed_dim, dense_dim, num_heads, **kwargs):
+        super().__init__(**kwargs)
+        self.embed_dim = embed_dim
+        self.dense_dim = dense_dim
+        self.num_heads = num_heads
+
+        self.attention_1 = layers.MultiHeadAttention(
+            num_heads = num_heads, key_dim=embed_dim
+        )
+        self.attention_2 = layers.MultiHeadAttention(
+            num_heads = num_heads, key_dim=embed_dim
+        )
+
+        self.dense_proj = keras.Sequential([
+            [layers.Dense(dense_dim, activation="relu"), layers.Dense(embed_dim),]
+        ])
+
+        self.layernorm_1 = layers.LayerNormalization()
+        self.layernorm_2 = layers.LayerNormalization()
+        self.layernorm_3 = layers.LayerNormalization()
+        self.supports_masking = True
+
+    def get_config(self):
+        config = super().get_config(self)
+        config.update({
+            "embed_dim": self.embed_dim,
+            "num_heads": self.num_heads,
+            "dense_dim": self.dense_dim
+        })
+        return config
+
+
+
