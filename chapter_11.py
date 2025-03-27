@@ -826,4 +826,56 @@ class TransformerDecoder(layers.Layer):
         return config
 
 
+# listing 11.34 Transformer decoder method that generates a casual mask
 
+def get_casual_attention(self, inputs):
+    input_shape = tf.shape(inputs)
+    batch_size, sequence_length = input_shape[0], input_shape[1]
+    i = tf.range(sequence_length)[:, tf.newaxis]
+    j = tf.range(sequence_length)
+    mask = tf.cast(i >= j, dtype="int32")
+    mask = tf.reshape(mask, (1, input_shape[1], input_shape[1]))
+    mult = tf.concat(
+        [tf.expand_dims(batch_size, -1),
+        tf.constant([1, 1], dtype=tf.int32)], axis=0
+    )
+    return tf.tile(mask, mult)
+
+# listing 11.35 the forward pass of the transformer decoder
+
+def call(self, inputs, encoder_outputs, mask=None):
+    casual_mask = self.get_casual_attention_mask(inputs)
+    if mask is not None:
+        padding_mask = tf.cast(
+            mask[:, tf.newaxis, :], dtype="int32"
+        )
+        padding_mask = tf.minimum(padding_mask, casual_mask)
+        attention_output_1 = self.attention_1(
+            query=inputs,
+            value=inputs,
+            key=inputs,
+            attention_mask=casual_mask
+        )
+        attention_output_1 = self.layernorm_1(inputs + attention_output_1)
+        attention_output_2 = self.attention_2(
+            query=attention_output_1,
+            value=encoder_outputs,
+            key=encoder_outputs,
+            attention_mask=padding_mask,
+        )
+
+        attention_output_2 = self.layernorm_2(
+            attention_output_1 + attention_output_2)
+        proj_output = self.dense_proj(attention_output_2)
+        return self.layernorm_3(attention_output_2 + proj_output)
+    
+
+# listing 11.36 end to end transformer
+
+embed_dim = 256
+dense_dim = 2048
+num_heads = 2
+
+encoder_inputs = keras.Input(Shape=(None,), dtype="int64", name="english")
+x = PositionalEmbedding(sequence_length, vocab_size, embed_dim)(encoder_inputs)
+encoder_inputs = TransformerEncoder(embed_dim, dense_dim, num_heads)(x)
