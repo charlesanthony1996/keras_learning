@@ -499,3 +499,4 @@ model.compile(optimizer=keras.optimizers.RMSprop())
 model.fit(train_images, train_labels, epochs=3)
 
 
+# chapter done

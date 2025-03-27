@@ -1,5 +1,6 @@
 # chapter 8 introduction to deep learning for computer vision
 
+# listing 8.1 instantiating a small convnet
 
 import keras
 from keras import layers
@@ -17,7 +18,11 @@ x = layers.Flatten()(x)
 outputs = layers.Dense(10, activation="softmax")(x)
 model = keras.Model(inputs = inputs, outputs = outputs)
 
+# listing 8.2 displaying the model's summary
+
 model.summary()
+
+# listing 8.3 training the convnet on mnist images
 
 from tensorflow.keras.datasets import mnist
 
@@ -30,10 +35,13 @@ model.compile(optimizer="rmsprop", loss="sparse_categorical_crossentropy", metri
 
 # model.fit(train_images, train_labels, epochs=5, batch_size=64)
 
+# listing 8.4 evaluating the convnet
+
 test_loss, test_acc = model.evaluate(test_images, test_labels)
 print(f"Test accuracy: {test_acc:.3f}")
 
-# an incorrectly structured convnet missing its max pooling layers
+# listing 8.5 an incorrectly structured convnet missing its max pooling layers
+
 inputs = keras.Input(shape=(28, 28, 1))
 x = layers.Conv2D(filters=32, kernel_size=3, activation="relu")(inputs)
 x = layers.Conv2D(filters=64, kernel_size=3, activation="relu")(x)
@@ -45,6 +53,9 @@ model_no_max_pool = keras.Model(inputs=inputs, outputs=outputs)
 # model_no_max_pool.summary()
 
 # cats vs dogs dataset
+
+# listing 8.6 copying images to training, validation and test directories
+
 import os, shutil, pathlib
 
 original_dir = pathlib.Path("/users/charles/documents/datasets/dogvscat_small/train")
@@ -79,6 +90,8 @@ make_subset("train", start_index=0, end_index=1000)
 make_subset("validation", start_index=1000, end_index=1500)
 make_subset("test", start_index=1500, end_index=2500)
 
+# listing 8.7 instantiating a small convnet for dogs vs cats classification
+
 from tensorflow import keras
 from tensorflow.keras import layers
 
@@ -98,7 +111,11 @@ outputs = layers.Dense(1, activation="sigmoid")(x)
 model = keras.Model(inputs=inputs, outputs=outputs)
 model.summary()
 
+# listing 8.8 configuring the model for training
+
 model.compile(loss="binary_crossentropy", optimizer="rmsprop", metrics=["accuracy"])
+
+# listing 8.9 using image dataset from directory to read images
 
 from tensorflow.keras.utils import image_dataset_from_directory
 
@@ -108,7 +125,8 @@ validation_dataset = image_dataset_from_directory(new_base_dir / "validation", i
 
 test_dataset = image_dataset_from_directory(new_base_dir / "test", image_size=(180, 180), batch_size=32)
 
-# displaying the shapes of the data and labels yielded by the dataset
+# listing 8.10 displaying the shapes of the data and labels yielded by the dataset
+
 for data_batch, labels_batch in train_dataset:
     print("data batch shape: ", data_batch.shape)
     print("labels batch shape: ", labels_batch.shape)
