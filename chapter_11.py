@@ -879,3 +879,5 @@ num_heads = 2
 encoder_inputs = keras.Input(Shape=(None,), dtype="int64", name="english")
 x = PositionalEmbedding(sequence_length, vocab_size, embed_dim)(encoder_inputs)
 encoder_inputs = TransformerEncoder(embed_dim, dense_dim, num_heads)(x)
+
+

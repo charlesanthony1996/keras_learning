@@ -445,4 +445,57 @@ for key, value in logs.items():
 
 @tf.function
 def test_step(inputs, targets):
-    pass
+    predictions = model(inputs, training=False)
+    loss = loss_fn(targets, predictions)
+
+    logs = {}
+    for metric in metrics:
+        metric.update_state(targets, predictions)
+        logs["val_" + metric.name] = metric.result()
+    
+    loss_tracking_metric.update_state(loss)
+    logs["val_loss"] = loss_tracking_metric.result()
+    return logs
+
+val_dataset = tf.data.Dataset.from_tensor_slices((val_images, val_labels))
+val_dataset = val_dataset.batch(32)
+reset_metrics()
+
+for inputs_batch, targets_batch in val_dataset:
+    logs = test_step(inputs_batch, targets_batch)
+print("Evaluation results: ")
+for key, value in logs.items():
+    print(f"...{key}: {value:.4f}")
+
+# listing 7.26 implementing a custom training step to use with fit()
+
+loss_fn = keras.losses.SparseCategoricalCrossentropy()
+loss_tracker = keras.metrics.Mean(name="loss")
+
+class CustomModel(keras.Model):
+    def train_step(self, data):
+        inputs, targets = data
+        with tf.GradientTape() as tape:
+            predictions = self(inputs, training=True)
+            loss = loss_fn(targets, predictions)
+            gradients = tape.gradient(loss, model.trainable_weights)
+            optimizer.apply_gradients(zip(gradients, model.trainable_weights))
+
+            loss_tracker.update(loss)
+            return { "loss": loss_tracker.result }
+    
+    @property
+    def metrics(self):
+        return [loss_tracker]
+    
+
+inputs = keras.Input(shape=(28 * 28,))
+features = layers.Dense(512, activation="relu")(inputs)
+features = layers.Dropout(0.5)(features)
+outputs = layers.Dense(10, activation="softmax")(features)
+model = CustomModel(inputs, outputs)
+
+model.compile(optimizer=keras.optimizers.RMSprop())
+model.fit(train_images, train_labels, epochs=3)
+
+
