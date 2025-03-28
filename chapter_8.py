@@ -132,12 +132,13 @@ for data_batch, labels_batch in train_dataset:
     print("labels batch shape: ", labels_batch.shape)
     break
 
-# fitting the model using a datasets
+# Listing 8.11 fitting the model using a datasets
 callbacks = [keras.callbacks.ModelCheckpoint(filepath="convnet_from_scratch.keras", save_best_only=True, monitor="val_loss")]
 
 history = model.fit(train_dataset, epochs=1, validation_data=validation_dataset, callbacks=callbacks)
 
-# displaying curves of loss and accuracy during training
+
+# Listing 8.12 displaying curves of loss and accuracy during training
 import matplotlib.pyplot as plt
 accuracy = history.history["accuracy"]
 val_accuracy = history.history["val_accuracy"]
@@ -155,12 +156,12 @@ plt.title("Training and validation loss")
 plt.legend()
 # plt.show()
 
-# evaluating the model on the test set
+# Listing 8.13 evaluating the model on the test set
 test_model = keras.models.load_model("convnet_from_scratch.keras")
 test_loss, test_acc = test_model.evaluate(test_dataset)
 print(f"Test accuracy: {test_acc:.3f}")
 
-# define a data augmentation stage to add to an image model
+# Listing 8.14 define a data augmentation stage to add to an image model
 data_augmentation = keras.Sequential(
     [
         layers.RandomFlip("horizontal"),
@@ -169,7 +170,7 @@ data_augmentation = keras.Sequential(
     ]
 )
 
-# displaying some randomly augmented training images
+# Listing 8.15 displaying some randomly augmented training images
 plt.figure(figsize=(10, 10))
 for images, _ in train_dataset.take(1):
     for i in range(9):
@@ -179,7 +180,7 @@ for images, _ in train_dataset.take(1):
         plt.axis("off")
 
 
-# defining a new convnet that includes image augmentation and dropout
+# Listing 8.16 defining a new convnet that includes image augmentation and dropout
 inputs = keras.Input(shape=(180, 180, 3))
 x = data_augmentation(inputs)
 x = layers.Rescaling(1./255)(x)
@@ -199,6 +200,7 @@ model = keras.Model(inputs=inputs, outputs=outputs)
 
 model.compile(loss="binary_crossentropy", optimizer="rmsprop", metrics=["accuracy"])
 
+# Listing 8.17 training the regularized convnet 
 callbacks = [
     keras.callbacks.ModelCheckpoint(
         filepath="convnet_from_scratch_with_augmentation.keras",
@@ -214,20 +216,20 @@ history = model.fit(
     callbacks=callbacks
 )
 
-# evaluating the model on the test set
+# Listing 8.18 evaluating the model on the test set
 test_model = keras.models.load_model("convnet_from_scratch_with_augmentation.keras")
 test_loss, test_acc = test_model.evaluate(test_dataset)
 print(f"Test accuracy: {test_acc:.3f}")
 # print("here 1")
 
-# instatiating the vgg16 convolutional base
+# Listing 8.19 instatiating the vgg16 convolutional base
 conv_base = keras.applications.vgg16.VGG16(
     weights="imagenet",
     include_top=False,
     input_shape=(180, 180, 3)
 )
 
-# extracting the vgg16 features and corresponding labels
+# Listing 8.20 extracting the vgg16 features and corresponding labels
 import numpy as np
 
 def get_features_and_labels(dataset):
@@ -247,7 +249,7 @@ test_features, test_labels = get_features_and_labels(test_dataset)
 
 print(train_features.shape)
 
-# defining and training the densely connected classifier
+# Listing 8.21 defining and training the densely connected classifier
 inputs = keras.Input(shape=(5, 5, 512))
 x = layers.Flatten()(inputs)
 x = layers.Dense(256)(x)
@@ -272,6 +274,8 @@ history = model.fit(
     callbacks=callbacks
 )
 
+# listing 8.22 Plotting the results
+
 import matplotlib.pyplot as plt
 acc = history.history["accuracy"]
 val_acc = history.history["val_accuracy"]
@@ -288,18 +292,19 @@ plt.title("Training and validation loss")
 plt.legend()
 plt.show()
 
-
+# Listing 8.23 Instantiating and freezing the vgg16 convolutional base
 conv_base = keras.applications.vgg16.VGG16(
     weights="imagenet",
     include_top=False,
 )
 
+# Listing 8.24 Printing the list of trainable weights before and after testing
 conv_base.trainable = False
 print("This is the number of trainable weights "
       "before freezing the conv base: ", len(conv_base.trainable_weights))
 
 
-# adding a data augmentation stage and a classifier to the convoutional base
+# Listing 8.25 adding a data augmentation stage and a classifier to the convoutional base
 data_augmentation = keras.Sequential(
     [
         layers.RandomFlip("horizontal"),
@@ -335,19 +340,22 @@ history = model.fit(
     callbacks=callbacks
 )
 
+# listing 8.26 evaluating the model on the set
+
 test_model = keras.models.load_model("feature_extraction_with_data_augmentation.keras")
 test_loss, test_acc = test_model.evaluate(test_dataset)
 print(f"Test accuracy: {test_acc:.3f}")
 
 conv_base.summary()
 
-# freezing all layers until the fourth from the last
+
+# Listing 8.27 freezing all layers until the fourth from the last
 conv_base.trainable = True
 for layer in conv_base.layers[:-4]:
     layer.trainable = False
 
 
-# fine tuning the model
+# Listing 8.28 fine tuning the model
 model.compile(loss="binary_crossentropy", optimizer=keras.optimizers.RMSprop(learning_rate=1e-5), metrics=["accuracy"])
 
 callbacks = [
@@ -370,3 +378,4 @@ test_loss, test_acc = model.evaluate(test_dataset)
 print(f"Test accuracy: {test_acc:.3f}")
 
 
+# chapter done
