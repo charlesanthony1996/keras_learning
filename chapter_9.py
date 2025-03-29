@@ -300,7 +300,8 @@ print(first_layer_activation.shape)
 # listing 9.10 visualizing the fifth channel
 
 import matplotlib.pyplot as plt
-plt.matshow(first_layer_activation[0, :, :, 5], cmap="virtual")
+plt.matshow(first_layer_activation[0, :, :, 5], cmap="viridis")
+plt.show()
 
 # listing 9.11 visualizing every channel in every intermediate activation
 
@@ -348,5 +349,91 @@ model = keras.applications.xception.Xception(
 
 # listing 9.13 printing the names of all convolutional layers in xception
 
-# for layer in model.layers:
-#     if isinstance(layer)
+for layer in model.layers:
+    if isinstance(layer, (keras.layers.Conv2D, keras.layers.SeparableConv2D)):
+        print(layer)
+
+
+# listing 9.14 creating a feature extractor model
+
+layer_name = "block3_sepconv1"
+layer = model.get_layer(name=layer_name)
+feature_extractor = keras.Model(inputs=model.input, outputs=layer.output)
+
+# listing 9.15 using the feature extractor
+
+activation = feature_extractor(
+    keras.applications.xception.preprocess_input(img_tensor)
+)
+
+import tensorflow as tf
+
+def compute_loss(image, filter_index):
+    activation = feature_extractor(image)
+    filter_activation = activation[:, 2:-2, 2:-2, filter_index]
+    return tf.reduce_mean(filter_activation)
+
+
+# listing 9.16 loss maximization via stochastic gradient ascent
+
+@tf.function
+def gradient_ascent_step(image, filter_index, learning_rate):
+    with tf.GradientTape() as tape:
+        tape.watch(image)
+        loss = compute_loss(image, filter_index)
+    grads = tape.gradient(loss, image)
+    grads = tf.math.l2_normalize(grads)
+    image += learning_rate * grads
+    return image
+
+
+# listing 9.17 function to generate filter visualizations
+
+img_width = 200
+img_height = 200
+
+def generate_filter_pattern(filter_index):
+    iterations = 30
+    learning_rate = 10.
+    image = tf.random.uniform(
+        minval = 0.4,
+        maxval = 0.6,
+        shape=(1, img_width, img_height, 3)
+    )
+    for i in range(iterations):
+        image = gradient_ascent_step(image, filter_index, learning_rate)
+    return image[0].numpy()
+
+
+# listing 9.18 utility function to convert a tensor into a valid image
+
+def deprocess_image(image):
+    image -= image.mean()
+    image /= image.std()
+    image *= 64
+    image += 128
+    image = np.clip(image, 0, 255).astype("uint8")
+    image = image[25:-25, 25:-25, :]
+    return image
+
+plt.axis("off")
+plt.imshow(deprocess_image(generate_filter_pattern(filter_index = 2)))
+
+# listing 9.19 generating a grid of all filter response patterns in a layer
+
+all_images = []
+for filter_index in range(64):
+    print(f"Processing filter {filter_index}")
+    image = deprocess_image(
+        generate_filter_pattern(filter_index)
+    )
+    all_images.append(image)
+
+margin = 5
+n = 8
+cropped_width = img_width - 25 * 2
+cropped_height = img_height - 25 * 2
+width = n * cropped_width + (n - 1) * margin
+height = n * cropped_height + (n - 1) * margin
+stitched_filters = np.zeros((width, height, 3))
+

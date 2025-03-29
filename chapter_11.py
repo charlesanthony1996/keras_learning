@@ -881,3 +881,4 @@ x = PositionalEmbedding(sequence_length, vocab_size, embed_dim)(encoder_inputs)
 encoder_inputs = TransformerEncoder(embed_dim, dense_dim, num_heads)(x)
 
 
+# chapter done
