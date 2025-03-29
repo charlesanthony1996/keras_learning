@@ -437,3 +437,20 @@ width = n * cropped_width + (n - 1) * margin
 height = n * cropped_height + (n - 1) * margin
 stitched_filters = np.zeros((width, height, 3))
 
+
+for i in range(n):
+    for j in range(n):
+        image = all_images[i * n + j]
+        # stitched_filters[
+        row_start = (cropped_width + margin) * i
+        row_end = (cropped_width + margin) * i + cropped_width
+        column_start = (cropped_height + margin) * j
+        column_end = (cropped_height + margin) * j + cropped_height
+
+        stitched_filters[ row_start: row_end, column_start:  column_end, :] = image
+        # ]
+
+keras.utils.save_img(
+    f"filters_for_layer_{layer_name}.png", stitched_filters
+)
+
