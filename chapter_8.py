@@ -55,6 +55,7 @@ model_no_max_pool = keras.Model(inputs=inputs, outputs=outputs)
 # cats vs dogs dataset
 
 # listing 8.6 copying images to training, validation and test directories
+# http://www.kaggle.com/c/dogs-vs-cats/data
 
 import os, shutil, pathlib
 
@@ -87,8 +88,8 @@ def make_subset(subset_name, start_index, end_index):
 
 # Adjust subset indices based on your dataset
 make_subset("train", start_index=0, end_index=1000)
-make_subset("validation", start_index=1000, end_index=1500)
-make_subset("test", start_index=1500, end_index=2500)
+make_subset("validation", start_index=0, end_index=500)
+make_subset("test", start_index=0, end_index=500)
 
 # listing 8.7 instantiating a small convnet for dogs vs cats classification
 
@@ -135,7 +136,7 @@ for data_batch, labels_batch in train_dataset:
 # Listing 8.11 fitting the model using a datasets
 callbacks = [keras.callbacks.ModelCheckpoint(filepath="convnet_from_scratch.keras", save_best_only=True, monitor="val_loss")]
 
-history = model.fit(train_dataset, epochs=1, validation_data=validation_dataset, callbacks=callbacks)
+history = model.fit(train_dataset, epochs=10, validation_data=validation_dataset, callbacks=callbacks)
 
 
 # Listing 8.12 displaying curves of loss and accuracy during training
@@ -211,7 +212,7 @@ callbacks = [
 
 history = model.fit(
     train_dataset,
-    epochs=1,
+    epochs=10,
     validation_data=validation_dataset,
     callbacks=callbacks
 )

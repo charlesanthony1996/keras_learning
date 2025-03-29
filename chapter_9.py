@@ -47,15 +47,9 @@ def path_to_target(path):
 
 input_imgs = np.zeros((num_imgs,) + img_size + (3,), dtype="float32")
 targets = np.zeros((num_imgs,) + img_size + (1,), dtype="uint8")
-
-
-def path_to_target_image(path):
-    return img_to_array(path, target_size=img_size)
-
-def path_to_target(path):
-    img = img_to_array(load_img(path, target_size=img_size, color_mode="grayscale"))
-    img = img.astype("uint8") - 1
-    return img
+for i in range(num_imgs):
+    input_imgs[i] = path_to_input_image(input_img_paths[i])
+    targets[i] = path_to_target(target_paths[i])
 
 num_val_samples = 1000
 train_input_imgs = input_imgs[:-num_val_samples]
@@ -70,6 +64,7 @@ from tensorflow.keras import layers
 def get_model(img_size, num_classes):
     inputs = keras.Input(shape=img_size + (3,))
     x = layers.Rescaling(1./255)(inputs)
+
     x = layers.Conv2D(64, 3, strides=2, activation="relu", padding="same")(x)
     x = layers.Conv2D(64, 3, activation="relu", padding="same")(x)
 
@@ -78,6 +73,7 @@ def get_model(img_size, num_classes):
 
     x = layers.Conv2D(256, 3, strides=2, padding="same", activation="relu")(x)
     x = layers.Conv2D(256, 3, padding="same", activation="relu")(x)
+
     x = layers.Conv2DTranspose(256, 3, activation="relu", padding="same")(x)
     x = layers.Conv2DTranspose(256, 3, activation="relu", padding="same", strides=2)(x)
 
@@ -103,7 +99,7 @@ history = model.fit(
     train_input_imgs,
     train_targets,
     # epochs = 50,
-    epochs = 10,
+    epochs = 1,
     callbacks = callbacks,
     batch_size = 64,
     validation_data = (val_input_imgs, val_targets)
@@ -133,7 +129,7 @@ plt.imshow(array_to_img(test_image))
 mask = model.predict(np.expand_dims(test_image, 0))[0]
 
 def display_mask(pred):
-    mask = np.argmax(pred, axis = 1)
+    mask = np.argmax(pred, axis = -1)
     mask *= 127
     plt.axis("off")
     plt.imshow(mask)
@@ -195,14 +191,15 @@ model.summary()
 
 # listing 9.4 how not to use batch normalization
 
-x = layers.Conv2D(32, 3, activation="relu")(x)
-x = layers.BatchNormalization()(x)
+# x = layers.Conv2D(32, 3, activation="relu")(x)
+# x = layers.BatchNormalization()(x)
 
 # listing 9.5 how to use batch normalization: the activation comes last 
 
-x = layers.Conv2D(32, 3, use_bias=False)(x)
-x = layers.BatchNormalization()(x)
-x = layers.Activation("relu")(x)
+# x = layers.Conv2D(32, 3, use_bias=False)(x)
+# x = layers.BatchNormalization()(x)
+# x = layers.Activation("relu")(x)
+# x = layers.GlobalAveragePooling2D()(x)
 
 data_augmentation = keras.Sequential(
     [
@@ -219,16 +216,16 @@ x = data_augmentation(inputs)
 x = layers.Rescaling(1./255)(inputs)
 x = layers.Conv2D(filters=32, kernel_size=5, use_bias=False)(x)
 
-for size in [32, 64, 128, 256]:
+for size in [32, 64, 128, 256, 512]:
     residual = x
 
     x = layers.BatchNormalization()(x)
     x = layers.Activation("relu")(x)
-    x = layers.SeperableConv2D(size, 3, padding="same", use_bias=False)(x)
+    x = layers.SeparableConv2D(size, 3, padding="same", use_bias=False)(x)
 
     x = layers.BatchNormalization()(x)
     x = layers.Activation("relu")(x)
-    x = layers.SeperableConv2D(size, 3, padding="same", use_bias=False)(x)
+    x = layers.SeparableConv2D(size, 3, padding="same", use_bias=False)(x)
 
     x = layers.MaxPooling2D(3, strides=2, padding="same")(x)
 
@@ -238,7 +235,6 @@ for size in [32, 64, 128, 256]:
 
 x = layers.GlobalAveragePooling2D()(x)
 x = layers.Dropout(0.5)(x)
-
 outputs = layers.Dense(1, activation="sigmoid")(x)
 model = keras.Model(inputs=inputs, outputs=outputs)
 
@@ -287,7 +283,7 @@ layer_outputs = []
 layer_names = []
 
 for layer in model.layers:
-    if isinstance(layer, (layer.Conv2D, layers.MaxPooling2D)):
+    if isinstance(layer, (layers.Conv2D, layers.MaxPooling2D)):
         layer_outputs.append(layer.output)
         layer_names.append(layer.name)
 
@@ -309,10 +305,48 @@ plt.matshow(first_layer_activation[0, :, :, 5], cmap="virtual")
 # listing 9.11 visualizing every channel in every intermediate activation
 
 images_per_row = 16
-for layer_row, layer_activation in zip(layer_names, activations):
+for layer_name, layer_activation in zip(layer_names, activations):
     n_features = layer_activation.shape[-1]
     size = layer_activation.shape[1]
     n_cols = n_features // images_per_row
-    display_grid = np.zeros((size + 1) * n_cols - 1)
+    display_grid = np.zeros(((size + 1) * n_cols - 1, images_per_row * (size + 1) - 1))
 
-    
+    for col in range(n_cols):
+        for row in range(images_per_row):
+            channel_index = col * images_per_row + row
+            channel_image = layer_activation[0, :, :, channel_index].copy()
+
+        if channel_image.sum() != 0:
+            channel_image -= channel_image.mean()
+            channel_image /= channel_image.std()
+            channel_image *= 64
+            channel_image += 128
+
+        channel_image = np.clip(channel_image, 0, 255).astype("uint8")
+        display_grid[
+            col * (size + 1): (col + 1) * size + col,
+            row * (size + 1): (row + 1) * size + row
+        ] = channel_image
+
+scale = 1. / size
+plt.figure(figsize=(scale * display_grid.shape[1],
+                    scale * display_grid.shape[0]))
+
+plt.title(layer_name)
+plt.grid(False)
+plt.axis("off")
+plt.imshow(display_grid, aspect="auto", cmap="viridis")
+
+
+
+# listing 9.12 instantiating the xception convolutional base
+
+model = keras.applications.xception.Xception(
+    weights="imagenet",
+    include_top=False
+)
+
+# listing 9.13 printing the names of all convolutional layers in xception
+
+# for layer in model.layers:
+#     if isinstance(layer)
