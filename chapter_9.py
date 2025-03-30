@@ -454,3 +454,100 @@ keras.utils.save_img(
     f"filters_for_layer_{layer_name}.png", stitched_filters
 )
 
+# listing 9.20 loading the xception network with pretrained weights
+
+model = keras.applications.xception.Xception(weights="imagenet")
+
+# listing 9.21 preprocessing an input image for xception
+
+img_path = keras.utils.get_file(
+    fname="elephant.jpg",
+    origin="https://img-datasets.s3.amazonaws.com/elephant.jpg"
+)
+
+def get_img_array(img_path, target_size):
+    img = keras.utils.load_img(img_path, target_size=target_size)
+    array = keras.utils.img_to_array(img)
+    array = np.expand_dims(array, axis=0)
+    array = keras.applications.xception.preprocess_input(array)
+    return array
+
+
+img_array = get_img_array(img_path, target_size=(299, 299))
+
+preds = model.predict(img_array)
+print(keras.applications.xception.decode_predictions(preds, top=3)[0])
+
+print(np.argmax(preds[0]))
+
+# listing 9.22 setting up a model that returns the last convolutional output
+
+last_conv_layer_name = "block14_sepconv2_act"
+classifier_layer_names = [
+    "avg_pool",
+    "predictions"
+]
+
+last_conv_layer = model.get_layer(last_conv_layer_name)
+last_conv_layer_model = keras.Model(model.inputs, last_conv_layer.input)
+
+# listing 9.23 reapplying the classifier on top of the last convolutional output
+
+classifier_input = keras.Input(shape=last_conv_layer.output.shape[1:])
+x = classifier_input
+for layer_name in classifier_layer_names:
+    x = model.get_layer(layer_name)(x)
+classifier_model = keras.Model(classifier_input, x)
+
+# listing 9.24 retrieving the gradients of the top predicted class
+
+import tensorflow as tf
+
+with tf.GradientTape() as tape:
+    last_conv_layer_output = last_conv_layer_model(img_array)
+    tape.watch(last_conv_layer_output)
+    preds = classifier_model(last_conv_layer_output)
+    top_pred_index = tf.argmax(preds[0])
+    top_class_channel = preds[:, top_pred_index]
+
+grads = tape.gradient(top_class_channel, last_conv_layer_output)
+
+# listing 9.25 gradient pooling and channel importance weighting
+
+pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2)).numpy()
+last_conv_layer_output = last_conv_layer_output.numpy()[0]
+for i in range(pooled_grads.shape[-1]):
+    last_conv_layer_output[:, :, i] *= pooled_grads[i]
+
+heatmap = np.mean(last_conv_layer_output, axis=-1)
+
+
+# listing 9.26 heatmap post processing
+
+heatmap = np.maximum(heatmap, 0)
+heatmap /= np.max(heatmap)
+plt.matshow(heatmap)
+
+# listing 9.27 superimposing the heatmap on the original picture
+# cm doesnt work anymore
+# import matplotlib.cm as cm
+
+img = keras.utils.load_img(img_path)
+img = keras.utils.img_to_array(img)
+
+heatmap = np.uint8(255 * heatmap)
+
+jet = plt.get_cmap("jet")
+jet_colors = jet(np.arange(256))[:, :3]
+jet_heatmap = jet_colors[heatmap]
+
+jet_heatmap = keras.utils.array_to_img(jet_heatmap)
+jet_heatmap = jet_heatmap.resize((img.shape[1], img.shape[0]))
+jet_heatmap = keras.utils.img_to_array(jet_heatmap)
+
+superimposed_img = jet_heatmap * 0.4 + img
+superimposed_img = keras.utils.array_to_img(superimposed_img)
+
+save_path = "elephant_cam.jpg"
+superimposed_img.save(save_path)
+
