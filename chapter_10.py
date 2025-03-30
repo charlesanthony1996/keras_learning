@@ -327,3 +327,4 @@ model.compile(optimizer="rmsprop", loss="mse", metrics=["mae"])
 
 history = model.fit(train_dataset, epochs=10, validation_data=val_dataset)
 
+# chapter done
