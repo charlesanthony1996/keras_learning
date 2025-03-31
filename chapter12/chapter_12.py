@@ -91,6 +91,39 @@ class PositionalEmbedding(layers.Layer):
         })
         return config
     
+# transformer decoder class
+
+class TransformerDecoder(layers.Layer):
+    def __init__(self, embed_dim, dense_dim, num_heads, **kwargs):
+        super().__init__(**kwargs)
+        self.embed_dim = embed_dim
+        self.dense_dim = dense_dim
+        self.num_heads = num_heads
+
+        self.attention_1 = layers.MultiHeadAttention(
+            num_heads = num_heads, key_dim=embed_dim
+        )
+        self.attention_2 = layers.MultiHeadAttention(
+            num_heads = num_heads, key_dim=embed_dim
+        )
+
+        self.dense_proj = keras.Sequential([
+            [layers.Dense(dense_dim, activation="relu"), layers.Dense(embed_dim),]
+        ])
+
+        self.layernorm_1 = layers.LayerNormalization()
+        self.layernorm_2 = layers.LayerNormalization()
+        self.layernorm_3 = layers.LayerNormalization()
+        self.supports_masking = True
+
+    def get_config(self):
+        config = super().get_config(self)
+        config.update({
+            "embed_dim": self.embed_dim,
+            "num_heads": self.num_heads,
+            "dense_dim": self.dense_dim
+        })
+        return config
 
 # listing 12.6 a simple transformed based language model
 
