@@ -3,6 +3,9 @@
 # listing 12.1 reweighting a probability distribution to a different temperature
 
 import numpy as np
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import layers
 
 def reweight_distribution(original_distribution, temperature=0.5):
     distribution = np.log(original_distribution) / temperature
@@ -101,14 +104,15 @@ class TransformerDecoder(layers.Layer):
         self.num_heads = num_heads
 
         self.attention_1 = layers.MultiHeadAttention(
-            num_heads = num_heads, key_dim=embed_dim
+            num_heads=num_heads, key_dim=embed_dim
         )
         self.attention_2 = layers.MultiHeadAttention(
-            num_heads = num_heads, key_dim=embed_dim
+            num_heads=num_heads, key_dim=embed_dim
         )
 
         self.dense_proj = keras.Sequential([
-            [layers.Dense(dense_dim, activation="relu"), layers.Dense(embed_dim),]
+            layers.Dense(dense_dim, activation="relu"),
+            layers.Dense(embed_dim),
         ])
 
         self.layernorm_1 = layers.LayerNormalization()
@@ -116,14 +120,32 @@ class TransformerDecoder(layers.Layer):
         self.layernorm_3 = layers.LayerNormalization()
         self.supports_masking = True
 
+    def call(self, inputs, encoder_outputs, mask=None):
+        # Self-attention block
+        attention_output_1 = self.attention_1(
+            query=inputs, value=inputs, key=inputs, attention_mask=mask
+        )
+        out_1 = self.layernorm_1(inputs + attention_output_1)
+
+        # Cross-attention block
+        attention_output_2 = self.attention_2(
+            query=out_1, value=encoder_outputs, key=encoder_outputs, attention_mask=mask
+        )
+        out_2 = self.layernorm_2(out_1 + attention_output_2)
+
+        # Feed-forward block
+        proj_output = self.dense_proj(out_2)
+        return self.layernorm_3(out_2 + proj_output)
+
     def get_config(self):
-        config = super().get_config(self)
+        config = super().get_config()
         config.update({
             "embed_dim": self.embed_dim,
+            "dense_dim": self.dense_dim,
             "num_heads": self.num_heads,
-            "dense_dim": self.dense_dim
         })
         return config
+
 
 # listing 12.6 a simple transformed based language model
 
@@ -134,4 +156,4 @@ num_heads = 2
 
 inputs = keras.Input(shape=(None,), dtype="int64")
 x = PositionalEmbedding(sequence_length, vocab_size, embed_dim)(inputs)
-x = TransformerDecoder()
+x = TransformerDecoder(embed_dim, latent_dim, num_heads)(x, x)
