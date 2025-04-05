@@ -250,6 +250,8 @@ predictions = model.predict(test_images)
 # listing 7.18 implementing a custom metric by subclassing the metric class
 
 import tensorflow as tf
+tf.config.run_functions_eagerly(True)
+
 
 class RootMeanSquaredError(keras.metrics.Metric):
     def __init__(self, name='rmse', **kwargs):
@@ -379,7 +381,7 @@ def train_step(inputs, targets):
         predictions = model(inputs, training=True)
         loss = loss_fn(targets, predictions)
     gradients = tape.gradient(loss, model.trainable_weights)
-    optimizer.apply_gradients(zip(gradients, model.trainable_weights))
+    # optimizer.apply_gradients(zip(gradients, model.trainable_weights))
 
     logs = {}
     for metric in metrics:
@@ -478,11 +480,12 @@ class CustomModel(keras.Model):
         with tf.GradientTape() as tape:
             predictions = self(inputs, training=True)
             loss = loss_fn(targets, predictions)
-            gradients = tape.gradient(loss, model.trainable_weights)
-            optimizer.apply_gradients(zip(gradients, model.trainable_weights))
+        gradients = tape.gradient(loss, self.trainable_weights)
+        optimizer.apply_gradients(zip(gradients, self.trainable_weights))
 
-            loss_tracker.update(loss)
-            return { "loss": loss_tracker.result }
+        loss_tracker.update_state(loss)
+        return {"loss": loss_tracker.result()}
+
     
     @property
     def metrics(self):
