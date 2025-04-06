@@ -48,7 +48,7 @@ def predict_next(output_vector, all_embeddings, avoid_word):
 
 
 # run the model
-encoder_word = "rapping"
+encoder_word = "apple"
 glove_path = "glove.6B.300d.txt"
 word_embeddings = load_glove_embeddings(glove_path)
 
@@ -62,3 +62,14 @@ if encoder_word not in word_embeddings:
 # should print out 300 because of the number of dimensions. read the name of the dataset again
 # print(dim)
 
+encoder_output = word_embeddings[encoder_word].reshape(1, -1)
+decoder_input = word_embeddings["<start>"]
+
+cross_attn_out = attention(decoder_input, encoder_output, encoder_output)
+ffn_out = feed_forward(cross_attn_out)
+final_output = cross_attn_out + ffn_out
+
+predicted_word = predict_next(final_output, word_embeddings, avoid_word=encoder_word)
+
+print("Encoder word: ", encoder_word)
+print(predicted_word)
